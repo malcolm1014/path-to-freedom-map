@@ -119,6 +119,24 @@
   }
   .safety b{ color:var(--text); }
 
+  /* Essential supplies checklist */
+  .supplies-wrap summary{ list-style:none; }
+  .supplies-wrap summary::-webkit-details-marker{ display:none; }
+  .supplies-wrap[open] summary{ margin-bottom:10px; }
+  .supply-item{ margin-bottom:14px; }
+  .supply-item:last-child{ margin-bottom:0; }
+  .supply-item .si-title{ font-size:.78rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .supply-item .si-note{ font-size:.71rem; color:var(--muted); line-height:1.5; margin-bottom:7px; }
+  .supply-links{ display:flex; flex-direction:column; gap:5px; }
+  .supply-link{
+    display:block; text-align:left; cursor:pointer; text-decoration:none;
+    font-family:var(--sans); font-size:.71rem; color:var(--text);
+    background:var(--glass-2); border:1px solid var(--line); border-radius:8px;
+    padding:6px 10px; transition:background .15s ease;
+  }
+  .supply-link:hover{ background:rgba(255,255,255,.07); }
+  .supply-link .si-arrow{ color:var(--accent); margin-left:4px; }
+
   /* Category chips */
   .cats{ display:flex; flex-wrap:wrap; gap:7px; }
   .chip{
@@ -299,6 +317,11 @@
     </div>
     <p class="safety"><b>In immediate danger? Call 911.</b> Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Church pantry rows sourced from a countywide sheet last dated Oct 2021 say so in their notes; call to confirm. The Dawn Center's shelter location is intentionally not published — call its hotline, don't try to find the building.</p>
   </div>
+
+  <details class="pad hairline supplies-wrap">
+    <summary class="label" style="cursor:pointer; margin-bottom:0;">Essential supplies checklist ▾</summary>
+    <div id="supplies" style="margin-top:10px"></div>
+  </details>
 
   <div class="pad hairline">
     <div class="label">Categories</div>
@@ -514,6 +537,50 @@ nearBtn.onclick = () => {
     setTimeout(() => { nearBtn.textContent = "◎ Near me"; }, 2500);
   }, { timeout: 10000 });
 };
+
+/* ============ SUPPLIES CHECKLIST ============ */
+const suppliesEl = document.getElementById('supplies');
+(SUPPLIES || []).forEach(s => {
+  const wrap = document.createElement('div');
+  wrap.className = 'supply-item';
+
+  const title = document.createElement('div');
+  title.className = 'si-title';
+  title.textContent = s.item;
+
+  const note = document.createElement('div');
+  note.className = 'si-note';
+  note.textContent = s.note;
+
+  const linksWrap = document.createElement('div');
+  linksWrap.className = 'supply-links';
+  s.links.forEach(l => {
+    let el;
+    if (l.matchName) {
+      el = document.createElement('button');
+      el.className = 'supply-link';
+      el.innerHTML = `${esc(l.label)} <span class="si-arrow">↗</span>`;
+      el.onclick = () => {
+        const r = RESOURCES.find(x => x.name === l.matchName);
+        const m = markers.find(x => x._data === r);
+        if (m) revealMarker(m);
+      };
+    } else {
+      el = document.createElement('a');
+      el.className = 'supply-link';
+      el.href = l.url;
+      el.target = '_blank';
+      el.rel = 'noopener';
+      el.innerHTML = `${esc(l.label)} <span class="si-arrow">↗</span>`;
+    }
+    linksWrap.appendChild(el);
+  });
+
+  wrap.appendChild(title);
+  wrap.appendChild(note);
+  wrap.appendChild(linksWrap);
+  suppliesEl.appendChild(wrap);
+});
 
 refresh();
 </script>

@@ -221,3 +221,62 @@ const RESOURCES = [
   { name:"Croom Tract Primitive Camp Zone West (free, hike-in)", category:"camping", county:"Hernando", st:"FL", lat:28.59833, lng:-82.29611, city:"Brooksville", url:"https://floridastateforests.reserveamerica.com/camping/croom-tract-primitive-camp-zone-west/", address:"Trailhead: Tucker Hill Trailhead, 26578 Croom Rd, Brooksville, FL 34601 — camp zone is a ~5.25 mile hike in from the parking area", phone:"(352) 797-4140", org:"Florida Forest Service", verified:"2026-08-03", when:"Day-use/trailhead parking: sunrise–sunset (statewide Florida Forest Service policy) — same unconfirmed gate-locking caveat as the East zone entry; call ahead.", services:[], notes:"Same free-camping/permit rules and possible $2/person day-use parking fee as the East zone, but a much longer hike in (5.25 miles) — realistically only workable with backpacking gear. No water, no amenities. Only cooking fires permitted. Same DIRECTIONS to Tucker Hill Trailhead as the East zone entry (shared trailhead) — via I-75: Exit 301, head east on SR-50/US-98, turn north on Croom-Rital Rd, continue ~8.5 miles. Via Suncoast Parkway (589): take it north to SR-50, head east through Brooksville, then north on US-41 (Broad St) to Croom Rd (CR-480), turn right/east ~5 miles to the trailhead." },
   { name:"Chassahowitzka River Campground (out of county, nearby)", category:"camping", county:"Citrus", st:"FL", lat:28.72333, lng:-82.60333, city:"Chassahowitzka", url:"https://chassahowitzkaflorida.com", address:"8600 W Miss Maggie Dr, Chassahowitzka, FL 34448", phone:"(352) 382-2200", org:"Citrus County Parks & Recreation", notes:"Just across the Citrus County line, included because it's the nearest fee campground to the parts of Hernando County where the WMA itself (Chassahowitzka Wildlife Management Area, overnight camping NOT permitted there) is the closest public land. 53 full-hookup RV sites plus 28 primitive tent sites, boat ramp, general store. Call for current nightly rates — not listed publicly." }
 ];
+
+/* =====================================================================
+   SUPPLIES — a checklist of essentials, each with where to actually get
+   it. `links` entries either point at a RESOURCES row by exact `name`
+   (the UI flies to that pin) or, when there's no single local pin for
+   the thing (a phone company signup page, the Social Security
+   Administration), carry their own `url`/`tel` directly. Sourced August
+   2026; call ahead — eligibility rules and offices move.
+   ===================================================================== */
+const SUPPLIES = [
+  {
+    item:"Two forms of ID",
+    note:"Florida issues an ID card (not a driver's license) FREE to anyone who is homeless — the fee is waived, not just reduced. You need a homeless-certification letter (dated within 90 days) from a shelter or service provider — PHP, Jericho Road, Dawn Center, or Catholic Charities can write one — plus your Social Security number and proof of your legal name (a birth certificate works). A second form is often a Social Security card (free to replace via SSA) or the shelter certification letter itself.",
+    links:[
+      { label:"Get the shelter certification letter — PHP HELP Center", matchName:"People Helping People (PHP) — Kass Circle HELP Center" },
+      { label:"FL ID card — Tax Collector, Brooksville (20 N Main St, Rm 112)", url:"https://www.hernandocounty.us/county-government/tax-collector/driver-license" },
+      { label:"FL ID card — Tax Collector, Spring Hill/Westside (7701 Forest Oaks Blvd)", url:"https://www.hernandocounty.us/county-government/tax-collector/driver-license" },
+      { label:"Birth certificate — FL Dept. of Health (same building as Premier Community HealthCare, Spring Hill)", matchName:"Premier Community HealthCare — Spring Hill Family Health Center" },
+      { label:"Social Security card replacement (free, SSA)", url:"https://www.ssa.gov/number-card" }
+    ]
+  },
+  {
+    item:"Food stamp (SNAP/EBT) card",
+    note:"Apply through Florida's ACCESS system, or get in-person help filling out the application — several places on this map will sit down and do it with you.",
+    links:[
+      { label:"SNAP application help — PHP HELP Center", matchName:"People Helping People (PHP) — Kass Circle HELP Center" },
+      { label:"SNAP outreach — Hernando County HHS", matchName:"Hernando County Health & Human Services" },
+      { label:"Apply online — ACCESS Florida (DCF)", url:"https://www.myflfamilies.com/services/public-assistance/supplemental-nutrition-assistance-program-snap" }
+    ]
+  },
+  {
+    item:"Bus pass",
+    note:"Ask a caseworker for a bus pass/token before paying out of pocket — several orgs here keep a small supply for clients. A Reduced-Fare Photo ID (for seniors/students/disability) also gets a standing discount.",
+    links:[
+      { label:"TheBus — Reduced-Fare ID + fare info", matchName:"TheBus (Hernando County Transit) — Operations Office" },
+      { label:"Ask for a case-manager bus pass — PHP", matchName:"People Helping People (PHP) — Kass Circle HELP Center" },
+      { label:"Ask for a case-manager bus pass — Salvation Army", matchName:"Salvation Army — Hernando County Corps (Spring Hill)" }
+    ]
+  },
+  {
+    item:"Cell phone (free, via the federal Lifeline program)",
+    note:"If you're on SNAP, Medicaid, SSI, or another qualifying program, you likely qualify for a free phone + monthly service through the federal Lifeline program — one per household. Sign up directly with a provider (no in-person Hernando office; this is a mail-in/online enrollment), or ask a caseworker at any hub on this map to help you apply if the paperwork is a barrier.",
+    links:[
+      { label:"SafeLink Wireless — apply", url:"https://www.safelinkwireless.com" },
+      { label:"Assurance Wireless — apply", url:"https://www.assurancewireless.com" },
+      { label:"Get help applying — PHP HELP Center", matchName:"People Helping People (PHP) — Kass Circle HELP Center" }
+    ]
+  },
+  {
+    item:"Backpack, tent, and sleeping bag (\"nap sack\")",
+    note:"PHP explicitly stocks tents and camping supplies alongside its regular food/hygiene giveaways — this is the most direct source found for exactly this need. Thrift stores are the fallback for a backpack specifically; ask about a free voucher rather than paying if money's the issue.",
+    links:[
+      { label:"Tents & camping supplies — PHP (Neighborhood Blessings)", matchName:"People Helping People (PHP) — Kass Circle HELP Center" },
+      { label:"Ask about a free-goods voucher — Salvation Army", matchName:"Salvation Army — Hernando County Corps (Spring Hill)" },
+      { label:"Ask about a free-goods voucher — St. Vincent de Paul", matchName:"St. Vincent de Paul — Hernando/Citrus District Thrift Store & Food Pantry" },
+      { label:"Thrift store — Goodwill Spring Hill", matchName:"Goodwill Spring Hill Superstore" }
+    ]
+  }
+];

@@ -47,6 +47,11 @@ dated, so it can be kept current instead of forgotten in a drawer.
 - **Quick-reference call strip** — the five numbers worth memorizing (211,
   Mid Florida Homeless Coalition, PHP, Dawn Center's 24hr DV hotline,
   Catholic Charities), tap-to-call on mobile.
+- **Essential supplies checklist** (collapsible) — ID, SNAP/EBT card, bus
+  pass, a free Lifeline cell phone, backpack/tent/sleeping bag — each
+  with buttons that jump straight to the map pin (or open the right
+  outside link, like the Lifeline provider or Social Security Administration)
+  that actually gets you that item.
 - Popups show services offered, named sub-programs with their own
   schedules (e.g. PHP's Tuesday clinic vs. its Sunday meal), address,
   phone, hours, and an independent-verification date where one exists.
@@ -121,6 +126,15 @@ full schema reference; short version:
   `"Hernando"` / `"FL"`, so a future statewide or national pass (same
   growth path the cyber maps took) can filter/group by it without a
   schema change.
+
+### The supplies checklist (`SUPPLIES` in `data.js`)
+
+A separate small array, not `RESOURCES` rows, since these are generic
+items rather than places: `{ item, note, links:[{ label, matchName }
+or { label, url }] }`. A `matchName` must exactly equal a `RESOURCES`
+row's `name` — the UI flies to that pin when clicked. Use `url` instead
+for anything with no single local pin (a phone provider's signup page,
+the Social Security Administration).
 
 ## Growing this map
 
