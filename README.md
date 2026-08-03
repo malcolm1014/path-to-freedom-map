@@ -4,13 +4,14 @@ An interactive map of homelessness and poverty resources across Hernando
 County, FL — food pantries, shelters with real overnight beds, thrift/
 clothing voucher programs, pet food pantries, transportation, clinics and
 mental-health/veteran support, free public workspace (computers, job
-search, meeting rooms), shower access (cheapest gym memberships found,
-plus free options), legally designated public camping (state forest
-primitive zones and developed campgrounds — not a claim that any other
-public land is open to overnight stays), and the coordinating agencies
-(211, Mid Florida Homeless Coalition, People Helping People, Hernando
-Community Coalition, United Way) that tie them together. 77 entries,
-researched August 2026 across three passes.
+search, meeting rooms), shower access (every gym in the county, ranked
+by cost, plus free options like a church that opens its showers twice a
+month), legally designated public camping (state forest primitive zones
+and developed campgrounds — not a claim that any other public land is
+open to overnight stays), and the coordinating agencies (211, Mid
+Florida Homeless Coalition, People Helping People, Hernando Community
+Coalition, United Way) that tie them together. 92 entries, researched
+August 2026 across four passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
 build tools, no API keys, no backend — it runs anywhere that can serve
@@ -216,6 +217,20 @@ County. The nearest confirmed one (UF/IFAS's East Pasco Incubator
 Kitchen) is in Dade City, a different county — too far to map here as a
 local resource. If a Hernando-based one opens, it belongs under the
 `workspace` category alongside the libraries and CareerSource.
+
+**Fourth pass — gyms and a deeper church/charity sweep:** every gym
+found in the county is listed under `hygiene`, including two private
+country clubs (Southern Hills Plantation, Brooksville Country Club) —
+included for completeness since the ask was literally every gym, but
+clearly flagged as membership/application-based rather than a practical
+same-day option compared to the 24-hour chain gyms. The church research
+went beyond the original 2021 PHP sheet by searching each congregation's
+own site/socials rather than only aggregator directories, which is how
+5 new organizations turned up that PHP's list never had (a church that
+opens its showers twice a month, a transitional-housing nonprofit, two
+new food pantries, one new clothing closet) — that gap between what an
+old compiled list has and what a fresh per-org search turns up is worth
+remembering if this map gets another research pass later.
 
 **If you are in immediate danger, call 911.**
 
