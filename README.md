@@ -96,13 +96,18 @@ full schema reference; short version:
   `financial`, `transportation`, `petfood`, `snap`, `veterans`, `seniors`,
   `children`, `casework`, `legal`, `dv`, `housing`, `energy`, `headstart`,
   `mentalhealth`, `workspace`, `showers`.
-- `idRequired` — plain-language string, **required on every `shelter` row**
-  (optional elsewhere): what someone actually needs to show up with.
-  "None published — appears low-barrier" is a legitimate value when no
-  requirement could be found; several shelters here explicitly do NOT
-  require photo ID (the Dawn Center, deliberately, so a domestic-violence
-  survivor with no documents isn't turned away) — don't assume a
-  requirement that isn't sourced.
+- `idRequired` — plain-language string, **required on every `shelter` and
+  `food` row** (optional elsewhere): what someone actually needs to show
+  up with. "None published — appears low-barrier" is a legitimate value
+  when no requirement could be found; several shelters here explicitly
+  do NOT require photo ID (the Dawn Center, deliberately, so a
+  domestic-violence survivor with no documents isn't turned away) —
+  don't assume a requirement that isn't sourced. For the ~26 individual
+  church pantries, this field carries a general county-wide documentation
+  pattern (photo ID, Social Security card, proof of Hernando County
+  residency) sourced from a directory DayStar Life Center itself compiled
+  — explicitly flagged in each entry as a general pattern, not a
+  confirmed per-church policy.
 - `events` — named sub-programs at one address, each with its own
   schedule (`[{ title, when }]`). Pull only from the org's own published
   info, never invented.
