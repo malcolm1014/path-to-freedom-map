@@ -36,10 +36,9 @@ dated, so it can be kept current instead of forgotten in a drawer.
 - **Precise county boundary** — the real Hernando County line (US Census
   Bureau TIGERweb data, 2,068-vertex polygon, not hand-drawn) drawn as a
   dashed outline on the map.
-- **Basemap toggle** (top-right, next to zoom) — switch between the
-  site's usual dark theme and a "Streets" basemap with full street-name
-  and address-level labeling, for when you need to actually read the map
-  at building level rather than just see pin clusters.
+- **Streets basemap** — full street-name and address-level labeling
+  (CARTO Voyager), so the map is actually navigable at building level.
+  No dark-mode map option — this is the only basemap.
 - **Category toggles** — show/hide each of 12 categories independently via
   pill chips: shelter, food, multi-service hubs, clinics & mental health,
   clothing, showers (gyms), free computers/workspace, transportation,
@@ -223,5 +222,6 @@ local resource. If a Hernando-based one opens, it belongs under the
 ## Credits
 
 Basemap tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright)
-contributors, dark theme by [CARTO](https://carto.com/attributions).
+contributors, Voyager style by [CARTO](https://carto.com/attributions).
 Geocoding via the US Census Bureau geocoder and OpenStreetMap Nominatim.
+County boundary via the US Census Bureau's TIGERweb service.
