@@ -96,6 +96,13 @@ full schema reference; short version:
   `financial`, `transportation`, `petfood`, `snap`, `veterans`, `seniors`,
   `children`, `casework`, `legal`, `dv`, `housing`, `energy`, `headstart`,
   `mentalhealth`, `workspace`, `showers`.
+- `idRequired` — plain-language string, **required on every `shelter` row**
+  (optional elsewhere): what someone actually needs to show up with.
+  "None published — appears low-barrier" is a legitimate value when no
+  requirement could be found; several shelters here explicitly do NOT
+  require photo ID (the Dawn Center, deliberately, so a domestic-violence
+  survivor with no documents isn't turned away) — don't assume a
+  requirement that isn't sourced.
 - `events` — named sub-programs at one address, each with its own
   schedule (`[{ title, when }]`). Pull only from the org's own published
   info, never invented.
@@ -150,6 +157,20 @@ Two entries (Salvation Army's Spring Hill line, Esther's House's
 extension) could only be sourced once and carry an explicit
 `CONFIDENCE NOTE` in their `notes` field flagging that; everything else
 was corroborated across at least two independent sources.
+
+**A real correction, not just a caveat:** researching ID/documentation
+requirements for the shelter rows turned up that Jericho Road Ministries'
+own current website describes a 5-to-25-month structured recovery
+program (Joshua's House for men, Esther's House for women) — not the
+walk-in, no-commitment emergency shelter model that third-party shelter
+directories (which this map originally relied on for "Mondon Hill" and
+"Mary's House") describe. Both framings are kept on the map rather than
+one silently overwriting the other: Mary's House's ~3-day emergency
+window and Mondon Hill are flagged as unconfirmed against the org's
+current materials, while Joshua's/Esther's House are described the way
+the org itself currently describes them. If you're triaging where to
+send someone tonight, call first — don't assume either framing without
+checking.
 
 **Searched for and not found (as of the August 2026 second-pass sweep):**
 a real shared-use/commissary kitchen physically located inside Hernando

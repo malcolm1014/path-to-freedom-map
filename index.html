@@ -398,6 +398,7 @@ const markers = RESOURCES.map(r => {
   if (r.phone)   facts.push(`<div class="fact"><span class="fk">TEL</span><a href="tel:${esc(String(r.phone).replace(/[^+\d]/g,'').slice(0,15))}">${esc(r.phone)}</a></div>`);
   if (r.email)   facts.push(`<div class="fact"><span class="fk">MAIL</span><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div>`);
   if (r.when)    facts.push(`<div class="fact"><span class="fk">TIME</span><span>${esc(r.when)}</span></div>`);
+  if (r.idRequired) facts.push(`<div class="fact"><span class="fk">ID</span><span>${esc(r.idRequired)}</span></div>`);
   const svcHtml = (r.services && r.services.length)
     ? r.services.map(s => `<span class="svc">${esc(SVC_LABELS[s] || s)}</span>`).join("")
     : "";
