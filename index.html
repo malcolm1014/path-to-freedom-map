@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Free interactive map of homelessness and poverty resources in Hernando County, FL — food pantries, shelters, thrift/clothing vouchers, pet food, transportation, medical clinics, and the coordinating agencies (211, Mid Florida Homeless Coalition, People Helping People) that connect them.">
+<meta name="description" content="Free interactive map of homelessness and poverty resources in Hernando County, FL — food pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics & mental health, free computers/workspace, shower access, and the coordinating agencies (211, Mid Florida Homeless Coalition, People Helping People) that connect them.">
 <title>Path to Freedom — Hernando County Resource Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
 
@@ -46,6 +46,9 @@
     --c-pet:      #d95926;  /* orange — pet food pantries           */
     --c-coalition:#9085e9;  /* violet — coordinating agencies       */
     --c-hotline:  #d55181;  /* magenta — phone-first crisis lines   */
+    --c-medical:  #1C93AC;  /* teal — clinics, mental health, veteran support */
+    --c-workspace:#7A9E3A;  /* olive — free computers/job search/meeting rooms */
+    --c-hygiene:  #B33F9E;  /* plum — showers / gym membership access */
 
     --sans: 'Space Grotesk', system-ui, sans-serif;
     --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -327,7 +330,10 @@ const CATEGORIES = {
   shelter:  { label:"Shelter (overnight beds)",     color:getCSS('--c-shelter')  },
   food:     { label:"Food pantries & meals",        color:getCSS('--c-food')     },
   hub:      { label:"Multi-service anchor centers", color:getCSS('--c-hub')      },
+  medical:  { label:"Clinics & mental health",      color:getCSS('--c-medical')  },
   clothing: { label:"Clothing & thrift vouchers",   color:getCSS('--c-clothing') },
+  hygiene:  { label:"Showers (gyms)",               color:getCSS('--c-hygiene')  },
+  workspace:{ label:"Free computers & workspace",   color:getCSS('--c-workspace')},
   transportation:{ label:"Transportation",          color:getCSS('--c-transportation') },
   pet:      { label:"Pet food pantries",            color:getCSS('--c-pet')      },
   coalition:{ label:"Coordinating agencies",        color:getCSS('--c-coalition')},
@@ -379,7 +385,8 @@ const SVC_LABELS = {
   financial:"financial aid", transportation:"transportation", petfood:"pet food",
   snap:"SNAP help", veterans:"veterans", seniors:"seniors", children:"children",
   casework:"casework", legal:"legal", dv:"domestic violence", housing:"housing",
-  energy:"utility aid", headstart:"Head Start"
+  energy:"utility aid", headstart:"Head Start", mentalhealth:"mental health",
+  workspace:"workspace", showers:"showers"
 };
 const markers = RESOURCES.map(r => {
   const cat = CATEGORIES[r.category];

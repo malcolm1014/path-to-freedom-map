@@ -2,10 +2,13 @@
 
 An interactive map of homelessness and poverty resources across Hernando
 County, FL — food pantries, shelters with real overnight beds, thrift/
-clothing voucher programs, pet food pantries, transportation, medical
-clinics, and the coordinating agencies (211, Mid Florida Homeless
-Coalition, People Helping People, Hernando Community Coalition) that tie
-them together. 51 entries, researched August 2026.
+clothing voucher programs, pet food pantries, transportation, clinics and
+mental-health/veteran support, free public workspace (computers, job
+search, meeting rooms), shower access (cheapest gym memberships found,
+plus free options), and the coordinating agencies (211, Mid Florida
+Homeless Coalition, People Helping People, Hernando Community Coalition,
+United Way) that tie them together. 72 entries, researched August 2026
+across two passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
 build tools, no API keys, no backend — it runs anywhere that can serve two
@@ -27,8 +30,9 @@ dated, so it can be kept current instead of forgotten in a drawer.
 
 ## Features
 
-- **Category toggles** — show/hide each of 8 categories independently via
-  pill chips: shelter, food, multi-service hubs, clothing, transportation,
+- **Category toggles** — show/hide each of 11 categories independently via
+  pill chips: shelter, food, multi-service hubs, clinics & mental health,
+  clothing, showers (gyms), free computers/workspace, transportation,
   pet food, coordinating agencies, hotlines.
 - **Search** — live filter by resource name or city.
 - **Resource list** — every visible pin is also listed in the sidebar;
@@ -63,19 +67,29 @@ full schema reference; short version:
 
 - `category`: `hub` (multi-service anchor, 3+ aid types under one roof) ·
   `food` · `shelter` (only where there are real overnight beds) ·
-  `clothing` · `medical` · `coalition` · `transportation` · `pet` ·
+  `clothing` · `medical` (clinics, mental health, veteran/PTSD support) ·
+  `workspace` (free computers/job search/meeting rooms — libraries,
+  CareerSource; also where a real local commissary/shared-use kitchen
+  would go if one is ever confirmed — none found in-county as of the
+  August 2026 sweep, see "A note on accuracy") · `hygiene` (shower
+  access — gyms ranked by cheapest membership found, plus free options
+  noted on hub entries like PHP) · `coalition` · `transportation` · `pet` ·
   `hotline` (phone-first, no single visitable address)
 - **Get `lat`/`lng` from a real geocoder** — the [US Census Bureau
   geocoder](https://geocoding.geo.census.gov/geocoder/) or
   [Nominatim](https://nominatim.openstreetmap.org/) — never eyeball a
   coordinate for a resource someone might actually try to walk or ride a
-  bus to. Exception: domestic-violence shelters, where the location is
-  deliberately kept confidential — see the Dawn Center row for the pattern
-  (city-center pin + explicit note, never the real address).
+  bus to. Exception: domestic-violence/youth-crisis shelters and similar
+  confidential residential programs, where the location is deliberately
+  generalized to the city center — see the Dawn Center, Life Center of
+  Hernando, and New Beginnings Youth Shelter rows for the pattern
+  (city-center pin + explicit note, never the real/scraped address, even
+  if one turns up in a search).
 - `services` — cross-cutting need tags independent of category (same idea
   as the cyber map's `topics`): `food`, `shelter`, `medical`, `clothing`,
   `financial`, `transportation`, `petfood`, `snap`, `veterans`, `seniors`,
-  `children`, `casework`, `legal`, `dv`, `housing`, `energy`, `headstart`.
+  `children`, `casework`, `legal`, `dv`, `housing`, `energy`, `headstart`,
+  `mentalhealth`, `workspace`, `showers`.
 - `events` — named sub-programs at one address, each with its own
   schedule (`[{ title, when }]`). Pull only from the org's own published
   info, never invented.
@@ -116,13 +130,20 @@ python3 -m http.server 8000
 ## A note on accuracy
 
 This is not an official or affiliated resource — it's a community
-reference compiled from public sources (org websites, findhelp.org,
-2600 news coverage, and PHP's own countywide pantry sheet) as of August
-2026. Hours, food supply, and voucher availability at volunteer-run
-pantries change often. **Call ahead before a special trip.** If you find
-something stale or wrong, that's expected for a map this size — the data
-sweep date and any `verified` field on each entry tell you how fresh a
-given row is.
+reference compiled from public sources (org websites, findhelp.org, local
+news coverage, a congressional office's community resource guide, and
+PHP's own countywide pantry sheet) as of August 2026. Hours, food supply,
+and voucher availability at volunteer-run pantries change often. **Call
+ahead before a special trip.** If you find something stale or wrong,
+that's expected for a map this size — the data sweep date and any
+`verified` field on each entry tell you how fresh a given row is.
+
+**Searched for and not found (as of the August 2026 second-pass sweep):**
+a real shared-use/commissary kitchen physically located inside Hernando
+County. The nearest confirmed one (UF/IFAS's East Pasco Incubator
+Kitchen) is in Dade City, a different county — too far to map here as a
+local resource. If a Hernando-based one opens, it belongs under the
+`workspace` category alongside the libraries and CareerSource.
 
 **If you are in immediate danger, call 911.**
 
