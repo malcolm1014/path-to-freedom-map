@@ -13,8 +13,9 @@ Community Coalition, United Way) that tie them together. 77 entries,
 researched August 2026 across three passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
-build tools, no API keys, no backend — it runs anywhere that can serve two
-static files (`index.html`, `data.js`), including GitHub Pages.
+build tools, no API keys, no backend — it runs anywhere that can serve
+three static files (`index.html`, `data.js`, `boundary.js`), including
+GitHub Pages.
 
 Sibling project to [Florida Cyber Resource
 Map](../florida-cyber-map) and [US Cyber Resource
@@ -32,6 +33,13 @@ dated, so it can be kept current instead of forgotten in a drawer.
 
 ## Features
 
+- **Precise county boundary** — the real Hernando County line (US Census
+  Bureau TIGERweb data, 2,068-vertex polygon, not hand-drawn) drawn as a
+  dashed outline on the map.
+- **Basemap toggle** (top-right, next to zoom) — switch between the
+  site's usual dark theme and a "Streets" basemap with full street-name
+  and address-level labeling, for when you need to actually read the map
+  at building level rather than just see pin clusters.
 - **Category toggles** — show/hide each of 12 categories independently via
   pill chips: shelter, food, multi-service hubs, clinics & mental health,
   clothing, showers (gyms), free computers/workspace, transportation,
@@ -135,6 +143,18 @@ or { label, url }] }`. A `matchName` must exactly equal a `RESOURCES`
 row's `name` — the UI flies to that pin when clicked. Use `url` instead
 for anything with no single local pin (a phone provider's signup page,
 the Social Security Administration).
+
+### The county boundary (`boundary.js`)
+
+A single GeoJSON `Feature` (`HERNANDO_BOUNDARY`), fetched from the US
+Census Bureau's TIGERweb REST service (`State_County` MapServer, layer
+1) rather than hand-drawn or approximated — real county-line data, same
+standard this project holds `lat`/`lng` geocoding to. Drawn on the map
+as a dashed outline; not used for any filtering logic (unlike the cyber
+maps' `regions.js`, since this map only ever covers one county). If this
+map ever grows to cover a second county, each county gets its own
+`Feature` in a `FeatureCollection` here rather than a new file per
+county.
 
 ## Growing this map
 

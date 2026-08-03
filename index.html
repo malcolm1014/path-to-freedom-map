@@ -67,6 +67,14 @@
   }
   .leaflet-control-zoom a:hover{ color:var(--text) !important; }
   .leaflet-bar{ border:1px solid var(--line) !important; border-radius:10px !important; overflow:hidden; }
+  .basemap-toggle{
+    background:var(--glass) !important; color:var(--muted) !important;
+    border:1px solid var(--line) !important; border-radius:10px !important;
+    backdrop-filter:blur(10px); font-family:var(--mono); font-size:.62rem;
+    letter-spacing:.04em; text-transform:uppercase; padding:6px 9px;
+    cursor:pointer; white-space:nowrap; display:block;
+  }
+  .basemap-toggle:hover{ color:var(--text) !important; }
   .leaflet-control-attribution{
     background:rgba(10,15,12,.6) !important; color:var(--muted) !important;
     font-family:var(--mono); font-size:9px !important;
@@ -345,6 +353,8 @@
 
 <!-- Resource rows live in data.js -->
 <script src="data.js"></script>
+<!-- Precise Hernando County boundary polygon (real Census data, not hand-drawn) -->
+<script src="boundary.js"></script>
 <script>
 /* Fixed display order — priority for this map (urgent needs first), not the
    underlying palette's own adjacency order; every dot always ships beside a
@@ -377,9 +387,42 @@ function milesTo(a, b){
 /* ============ MAP SETUP — centered on Hernando County ============ */
 const map = L.map('map', { zoomControl:false }).setView([28.495, -82.455], 11);
 L.control.zoom({ position:'topright' }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap contributors © CARTO', maxZoom:18
+
+/* Two basemaps: the site's usual dark theme, and a "Streets" layer with
+   denser street-name and address-point labeling for when you actually
+   need to read the map at building level. Same CARTO CDN, no API key. */
+const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20
+});
+const streetsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20
+});
+darkLayer.addTo(map);
+let onStreets = false;
+
+/* Precise Hernando County line — boundary.js, real Census TIGERweb data */
+L.geoJSON(HERNANDO_BOUNDARY, {
+  style:{ color:getCSS('--accent'), weight:2, opacity:.85, fill:false, dashArray:'2 6' }
 }).addTo(map);
+
+/* Basemap toggle — a real Leaflet control so it sits with zoom, not the panel */
+const BasemapToggle = L.Control.extend({
+  options:{ position:'topright' },
+  onAdd(){
+    const btn = L.DomUtil.create('button', 'basemap-toggle');
+    btn.type = 'button';
+    btn.textContent = '🗺 Streets';
+    btn.title = 'Switch to a basemap with street names and address-level detail';
+    L.DomEvent.disableClickPropagation(btn);
+    btn.onclick = () => {
+      onStreets = !onStreets;
+      if (onStreets){ map.removeLayer(darkLayer); streetsLayer.addTo(map); btn.textContent = '🌙 Dark'; btn.title = 'Switch back to the dark map'; }
+      else { map.removeLayer(streetsLayer); darkLayer.addTo(map); btn.textContent = '🗺 Streets'; btn.title = 'Switch to a basemap with street names and address-level detail'; }
+    };
+    return btn;
+  }
+});
+new BasemapToggle().addTo(map);
 
 /* Marker clustering — declusters fully by zoom 13 (tight county, dense downtown Spring Hill) */
 const clusters = L.markerClusterGroup({
