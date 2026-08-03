@@ -5,10 +5,12 @@ County, FL — food pantries, shelters with real overnight beds, thrift/
 clothing voucher programs, pet food pantries, transportation, clinics and
 mental-health/veteran support, free public workspace (computers, job
 search, meeting rooms), shower access (cheapest gym memberships found,
-plus free options), and the coordinating agencies (211, Mid Florida
-Homeless Coalition, People Helping People, Hernando Community Coalition,
-United Way) that tie them together. 72 entries, researched August 2026
-across two passes.
+plus free options), legally designated public camping (state forest
+primitive zones and developed campgrounds — not a claim that any other
+public land is open to overnight stays), and the coordinating agencies
+(211, Mid Florida Homeless Coalition, People Helping People, Hernando
+Community Coalition, United Way) that tie them together. 77 entries,
+researched August 2026 across three passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
 build tools, no API keys, no backend — it runs anywhere that can serve two
@@ -30,10 +32,10 @@ dated, so it can be kept current instead of forgotten in a drawer.
 
 ## Features
 
-- **Category toggles** — show/hide each of 11 categories independently via
+- **Category toggles** — show/hide each of 12 categories independently via
   pill chips: shelter, food, multi-service hubs, clinics & mental health,
   clothing, showers (gyms), free computers/workspace, transportation,
-  pet food, coordinating agencies, hotlines.
+  pet food, legal public camping, coordinating agencies, hotlines.
 - **Search** — live filter by resource name or city.
 - **Resource list** — every visible pin is also listed in the sidebar;
   click a row to fly to it and open its popup.
@@ -73,7 +75,11 @@ full schema reference; short version:
   would go if one is ever confirmed — none found in-county as of the
   August 2026 sweep, see "A note on accuracy") · `hygiene` (shower
   access — gyms ranked by cheapest membership found, plus free options
-  noted on hub entries like PHP) · `coalition` · `transportation` · `pet` ·
+  noted on hub entries like PHP) · `camping` (legally designated public
+  camping only — a state forest primitive zone or developed campground,
+  never "public land that's probably fine to camp on"; WMA land where
+  overnight camping is explicitly prohibited is deliberately excluded,
+  not implied as an option) · `coalition` · `transportation` · `pet` ·
   `hotline` (phone-first, no single visitable address)
 - **Get `lat`/`lng` from a real geocoder** — the [US Census Bureau
   geocoder](https://geocoding.geo.census.gov/geocoder/) or
@@ -137,6 +143,13 @@ and voucher availability at volunteer-run pantries change often. **Call
 ahead before a special trip.** If you find something stale or wrong,
 that's expected for a map this size — the data sweep date and any
 `verified` field on each entry tell you how fresh a given row is.
+
+**"Verified" means cross-checked against an independent written source,
+never an actual phone call** — this project has no calling capability.
+Two entries (Salvation Army's Spring Hill line, Esther's House's
+extension) could only be sourced once and carry an explicit
+`CONFIDENCE NOTE` in their `notes` field flagging that; everything else
+was corroborated across at least two independent sources.
 
 **Searched for and not found (as of the August 2026 second-pass sweep):**
 a real shared-use/commissary kitchen physically located inside Hernando
