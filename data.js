@@ -32,11 +32,14 @@
           pet      pet food pantries
           hotline  phone-first intake/crisis lines with no single
                     physical address people visit
-          workspace free public workspace — computers, job search, meeting
-                    rooms (libraries, CareerSource); also where a real
-                    commissary/shared-use kitchen would go if one is ever
-                    confirmed inside the county (none found as of this
-                    sweep — see README)
+          workspace free public workspace — computers, meeting rooms
+                    (libraries); also where a real commissary/shared-use
+                    kitchen would go if one is ever confirmed inside the
+                    county (none found as of this sweep — see README).
+                    Dedicated employment/career-services orgs (CareerSource,
+                    Vocational Rehab) are `jobs` instead, even though they
+                    also offer computers, since job placement is their
+                    actual mission
           hygiene  shower access — gyms (by cheapest membership found) and
                     any free public shower option
           camping  legally designated public camping — state forest primitive
@@ -45,6 +48,13 @@
                     areas. WMA land where overnight camping is explicitly
                     NOT permitted (e.g. Chassahowitzka WMA proper) is
                     deliberately excluded, not implied as an option
+          jobs     dedicated job/employment centers — CareerSource (the
+                    state's official "American Job Center"), Vocational
+                    Rehabilitation. Distinct from `workspace`, which is
+                    generic free-computer/meeting-room access (libraries);
+                    an entry belongs here only if job placement/career
+                    services are its actual mission, not just a side
+                    effect of having public computers
      3. county / st — "Hernando" / "FL" today; keep populated on every
         row so a future statewide pass can filter/group by it immediately.
      4. url / address / phone / when / org may be "" or omitted if
@@ -76,7 +86,16 @@
         deliberate low-barrier-access
         practice at DV shelters especially, not an oversight).
 
-   Data sweep: August 2026, fourth pass same month (a full gym sweep —
+   Data sweep: August 2026, fifth pass same month — added a dedicated
+   `jobs` category (CareerSource, reclassified out of `workspace` since
+   job placement is its actual mission, plus both of Hernando County's
+   Florida Division of Vocational Rehabilitation offices, newly found).
+   Goodwill's planned Brooksville job-training center was found but NOT
+   added — it doesn't open until late 2027/2028, and this map only lists
+   what's actually operating now, same rule applied earlier to EōS
+   Fitness's not-yet-open location.
+
+   Fourth pass same month (a full gym sweep —
    every fitness chain/independent gym found in the county, including
    two private country clubs listed for completeness and clearly flagged
    as such — plus a second, deeper church/charity research pass beyond
@@ -214,8 +233,12 @@ const RESOURCES = [
   { name:"Hernando County Warming Center (seasonal, cold-weather nights only)", category:"shelter", county:"Hernando", st:"FL", lat:28.54882, lng:-82.39889, city:"Brooksville", url:"https://www.hernandocounty.us", address:"The Enrichment Center, 800 John Gary Grubbs Blvd, Brooksville, FL 34601", phone:"(352) 540-4338", org:"Hernando County Emergency Management + City of Brooksville", verified:"2026-08-03", idRequired:"No ID or documentation requirement found in any of the county's own opening-night press releases — every announcement checked simply describes it as open \"to those in need,\" with no eligibility criteria or ID mentioned at all. Appears to be the lowest-barrier shelter option on this map — but it's also the most limited (overnight only, weather-triggered, no meals/cots, pets not accepted).", services:["shelter"], notes:"Opens only on cold-weather nights (announced ad hoc via county news releases) — 8pm to 8am, no meals or cots provided, pets not accepted. Free TheBus transport: pickup 8pm at the Walmart, 7305 Broad St, Brooksville, return drop-off 8am same spot. Call county HHS or watch hernandocounty.us news for open/close announcements." },
   { name:"M.O.V.E. (Ministry of Outreach and Volunteer Engagement) — Transitional Housing", category:"shelter", county:"Hernando", st:"FL", lat:28.49028, lng:-82.54512, city:"Spring Hill", url:"https://moveoutreach.com", address:"4134 Lamson Ave, Spring Hill, FL 34608", phone:"(352) 296-3699", email:"m.o.v.e.outreachservices@gmail.com", org:"Ministry of Outreach and Volunteer Engagement", verified:"2026-08-03", idRequired:"Not published — the org's own site describes the Transitional Housing Program's purpose but not its capacity, eligibility, or documentation requirements. Call or email to ask before counting on this as a same-day option.", services:["shelter","food","clothing","seniors"], notes:"Runs a Transitional Housing Program for people experiencing homelessness (\"a safe, supportive, and structured environment... to rebuild their lives, access resources, and work toward permanent housing\"), plus a food bank, a clothes bank, a tutoring program, and a senior wellness program (companionship, transportation, food access) all from the same org. Found via this map's second church/charity-research pass — a genuinely new find, not on the original PHP sheet or the congressional resource guide." },
 
+  // ---- JOB CENTERS (dedicated employment/career services) ----
+  { name:"CareerSource Pasco Hernando — Brooksville Center", category:"jobs", county:"Hernando", st:"FL", lat:28.54105, lng:-82.45651, city:"Brooksville", url:"https://www.careersourcepascohernando.com", address:"16336 Cortez Blvd, Brooksville, FL 34601", phone:"(352) 200-3020", org:"CareerSource Pasco Hernando", verified:"2026-08-03", idRequired:"None to use the computers/basic services. Photo ID typically requested for enrollment in a formal training/funding program — ask staff.", services:["workspace","casework","veterans"], notes:"Hernando County's American Job Center (the state's official \"one-stop\" employment system) — free computers with internet for job search and resume building, career counseling, skills workshops, hiring events, and training funds for those eligible. No cost, no appointment required for basic services. Also staffs Disabled Veteran Outreach Program (DVOP) and Local Veterans' Employment Representative (LVER) specialists who provide dedicated job placement help for veterans, especially those with barriers to employment or who are homeless — ask specifically for a veterans rep. Mon–Fri 8am–5pm." },
+  { name:"Florida Division of Vocational Rehabilitation — Brooksville", category:"jobs", county:"Hernando", st:"FL", lat:28.53991, lng:-82.4017, city:"Brooksville", url:"https://www.rehabworks.org", address:"20080 Cortez Blvd, Brooksville, FL 34601", phone:"(352) 610-5212", org:"Florida Division of Vocational Rehabilitation (Unit 16A — Hernando)", verified:"2026-08-03", idRequired:"No specific document list required to start — bring whatever you have from doctors, schools, or past jobs describing your disability; if you don't have current records, VR pays for the evaluation itself. Must have legal US work status (citizen, Green Card, or work visa).", services:["workspace","casework"], notes:"Free job-placement and training assistance specifically for people with disabilities — tuition/book assistance for college or vocational school, assistive technology, transportation services, occupational licensing help, vehicle modifications, and direct job placement assistance. Decision on eligibility within 60 days of applying. Mon–Fri 8am–5pm." },
+  { name:"Florida Division of Vocational Rehabilitation — Spring Hill", category:"jobs", county:"Hernando", st:"FL", lat:28.49107, lng:-82.59473, city:"Spring Hill", url:"https://www.rehabworks.org", address:"7361 Forest Oaks Blvd, Spring Hill, FL 34606", phone:"(352) 610-5212", org:"Florida Division of Vocational Rehabilitation (Unit 16A — Hernando)", verified:"2026-08-03", idRequired:"Same as the Brooksville office — no fixed document checklist, bring what you have, VR covers evaluation costs if needed. Must have legal US work status.", services:["workspace","casework"], notes:"Second Hernando County location for the same Vocational Rehabilitation unit as the Brooksville office (same phone number) — same services. Mon–Fri 8am–5pm." },
+
   // ---- WORKSPACE (free computers, job search, meeting rooms) ----
-  { name:"CareerSource Pasco Hernando — Brooksville Center", category:"workspace", county:"Hernando", st:"FL", lat:28.54105, lng:-82.45651, city:"Brooksville", url:"https://careersourcepascohernando.com", address:"16336 Cortez Blvd, Brooksville, FL 34601", phone:"(352) 200-3020", org:"CareerSource Pasco Hernando", verified:"2026-08-03", services:["workspace","casework"], notes:"Free American Job Center — computers with internet for job search and resume building, career counseling, skills workshops, hiring events, and training funds for those eligible. No cost, no appointment required for basic services. Mon–Fri 8am–5pm." },
   { name:"Hernando County Public Library — Main Branch", category:"workspace", county:"Hernando", st:"FL", lat:28.55688, lng:-82.38727, city:"Brooksville", url:"https://hernandocountylibrary.us", address:"238 Howell Ave, Brooksville, FL 34601", phone:"(352) 754-4043", org:"Hernando County Public Library System", verified:"2026-08-03", services:["workspace"], notes:"Free computers and high-speed internet — no library card required. Meeting rooms bookable for individual or nonprofit-group use during open hours. Mon–Wed 10am–6pm, Thu 12–8pm, Fri 9am–5pm, closed Sat–Sun." },
   { name:"Hernando County Public Library — East Hernando Branch", category:"workspace", county:"Hernando", st:"FL", lat:28.5283, lng:-82.23357, city:"Brooksville", url:"https://hernandocountylibrary.us", address:"6457 Windmere Rd, Brooksville, FL 34602", phone:"", org:"Hernando County Public Library System", verified:"2026-08-03", services:["workspace"], notes:"Free computers, no card required; bookable meeting room. Tue–Wed 10am–6pm, Thu 12–8pm, Fri–Sat 9am–5pm, closed Sun–Mon." },
   { name:"Hernando County Public Library — West Hernando Branch (temporarily closed)", category:"workspace", county:"Hernando", st:"FL", lat:28.52218, lng:-82.56435, city:"Brooksville", url:"https://hernandocountylibrary.us", address:"6335 Blackbird Ave, Brooksville, FL 34613", phone:"", org:"Hernando County Public Library System", verified:"2026-08-03", services:["workspace"], notes:"CLOSED for repairs starting May 11, 2026 — call the system or check hernandocountylibrary.us before visiting; normally free computers/no card required plus a bookable meeting room, Mon–Wed 10am–6pm, Thu 12–8pm, Fri 9am–5pm." },

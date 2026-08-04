@@ -3,15 +3,15 @@
 An interactive map of homelessness and poverty resources across Hernando
 County, FL — food pantries, shelters with real overnight beds, thrift/
 clothing voucher programs, pet food pantries, transportation, clinics and
-mental-health/veteran support, free public workspace (computers, job
-search, meeting rooms), shower access (every gym in the county, ranked
-by cost, plus free options like a church that opens its showers twice a
-month), legally designated public camping (state forest primitive zones
-and developed campgrounds — not a claim that any other public land is
-open to overnight stays), and the coordinating agencies (211, Mid
-Florida Homeless Coalition, People Helping People, Hernando Community
-Coalition, United Way) that tie them together. 92 entries, researched
-August 2026 across four passes.
+mental-health/veteran support, dedicated job/employment centers, free
+public workspace (computers, meeting rooms), shower access (every gym in
+the county, ranked by cost, plus free options like a church that opens
+its showers twice a month), legally designated public camping (state
+forest primitive zones and developed campgrounds — not a claim that any
+other public land is open to overnight stays), and the coordinating
+agencies (211, Mid Florida Homeless Coalition, People Helping People,
+Hernando Community Coalition, United Way) that tie them together. 94
+entries, researched August 2026 across five passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
 build tools, no API keys, no backend — it runs anywhere that can serve
@@ -40,10 +40,11 @@ dated, so it can be kept current instead of forgotten in a drawer.
 - **Streets basemap** — full street-name and address-level labeling
   (CARTO Voyager), so the map is actually navigable at building level.
   No dark-mode map option — this is the only basemap.
-- **Category toggles** — show/hide each of 12 categories independently via
+- **Category toggles** — show/hide each of 13 categories independently via
   pill chips: shelter, food, multi-service hubs, clinics & mental health,
-  clothing, showers (gyms), free computers/workspace, transportation,
-  pet food, legal public camping, coordinating agencies, hotlines.
+  clothing, showers (gyms), job centers, free computers/workspace,
+  transportation, pet food, legal public camping, coordinating agencies,
+  hotlines.
 - **Search** — live filter by resource name or city.
 - **Resource list** — every visible pin is also listed in the sidebar;
   click a row to fly to it and open its popup.
@@ -83,17 +84,20 @@ full schema reference; short version:
 - `category`: `hub` (multi-service anchor, 3+ aid types under one roof) ·
   `food` · `shelter` (only where there are real overnight beds) ·
   `clothing` · `medical` (clinics, mental health, veteran/PTSD support) ·
-  `workspace` (free computers/job search/meeting rooms — libraries,
-  CareerSource; also where a real local commissary/shared-use kitchen
-  would go if one is ever confirmed — none found in-county as of the
-  August 2026 sweep, see "A note on accuracy") · `hygiene` (shower
-  access — gyms ranked by cheapest membership found, plus free options
-  noted on hub entries like PHP) · `camping` (legally designated public
-  camping only — a state forest primitive zone or developed campground,
-  never "public land that's probably fine to camp on"; WMA land where
-  overnight camping is explicitly prohibited is deliberately excluded,
-  not implied as an option) · `coalition` · `transportation` · `pet` ·
-  `hotline` (phone-first, no single visitable address)
+  `jobs` (dedicated employment centers — CareerSource, Vocational
+  Rehabilitation — where job placement is the actual mission, not a
+  side effect of having public computers) · `workspace` (free computers/
+  meeting rooms — libraries; also where a real local commissary/
+  shared-use kitchen would go if one is ever confirmed — none found
+  in-county as of the August 2026 sweep, see "A note on accuracy") ·
+  `hygiene` (shower access — gyms ranked by cheapest membership found,
+  plus free options noted on hub entries like PHP) · `camping` (legally
+  designated public camping only — a state forest primitive zone or
+  developed campground, never "public land that's probably fine to camp
+  on"; WMA land where overnight camping is explicitly prohibited is
+  deliberately excluded, not implied as an option) · `coalition` ·
+  `transportation` · `pet` · `hotline` (phone-first, no single visitable
+  address)
 - **Get `lat`/`lng` from a real geocoder** — the [US Census Bureau
   geocoder](https://geocoding.geo.census.gov/geocoder/) or
   [Nominatim](https://nominatim.openstreetmap.org/) — never eyeball a
