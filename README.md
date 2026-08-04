@@ -3,15 +3,17 @@
 An interactive map of homelessness and poverty resources across Hernando
 County, FL — food pantries, shelters with real overnight beds, thrift/
 clothing voucher programs, pet food pantries, transportation, clinics and
-mental-health/veteran support, dedicated job/employment centers, free
+mental-health/veteran support, dedicated job/employment centers,
+government social-welfare offices (Section 8, Medicaid/SNAP/TANF
+applications, the school district's homeless-student liaison), free
 public workspace (computers, meeting rooms), shower access (every gym in
 the county, ranked by cost, plus free options like a church that opens
 its showers twice a month), legally designated public camping (state
 forest primitive zones and developed campgrounds — not a claim that any
 other public land is open to overnight stays), and the coordinating
 agencies (211, Mid Florida Homeless Coalition, People Helping People,
-Hernando Community Coalition, United Way) that tie them together. 94
-entries, researched August 2026 across five passes.
+Hernando Community Coalition, United Way) that tie them together. 99
+entries, researched August 2026 across six passes.
 
 Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
 build tools, no API keys, no backend — it runs anywhere that can serve
@@ -40,10 +42,11 @@ dated, so it can be kept current instead of forgotten in a drawer.
 - **Streets basemap** — full street-name and address-level labeling
   (CARTO Voyager), so the map is actually navigable at building level.
   No dark-mode map option — this is the only basemap.
-- **Category toggles** — show/hide each of 13 categories independently via
+- **Category toggles** — show/hide each of 14 categories independently via
   pill chips: shelter, food, multi-service hubs, clinics & mental health,
-  clothing, showers (gyms), job centers, free computers/workspace,
-  transportation, pet food, legal public camping, coordinating agencies,
+  clothing, showers (gyms), job centers, government benefits offices,
+  free computers/workspace, transportation, pet food, legal public
+  camping, coordinating agencies,
   hotlines.
 - **Search** — live filter by resource name or city.
 - **Resource list** — every visible pin is also listed in the sidebar;
@@ -86,7 +89,11 @@ full schema reference; short version:
   `clothing` · `medical` (clinics, mental health, veteran/PTSD support) ·
   `jobs` (dedicated employment centers — CareerSource, Vocational
   Rehabilitation — where job placement is the actual mission, not a
-  side effect of having public computers) · `workspace` (free computers/
+  side effect of having public computers) · `benefits` (government
+  social-welfare administration you walk into in person — Section 8
+  Housing Authority, the DCF/ACCESS Florida office, the school
+  district's homeless-student liaison — distinct from `hotline`, which
+  is phone-first with no physical Hernando address) · `workspace` (free computers/
   meeting rooms — libraries; also where a real local commissary/
   shared-use kitchen would go if one is ever confirmed — none found
   in-county as of the August 2026 sweep, see "A note on accuracy") ·
