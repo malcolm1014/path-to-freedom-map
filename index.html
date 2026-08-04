@@ -151,6 +151,25 @@
   .supply-link:hover{ background:rgba(255,255,255,.07); }
   .supply-link .si-arrow{ color:var(--accent); margin-left:4px; }
 
+  /* Live job listings (CareerOneStop) */
+  .jobs-attribution{ font-size:.62rem; color:var(--muted); margin-top:9px; line-height:1.4; }
+  .jobs-attribution a{ color:var(--accent); }
+  .job-card{
+    background:var(--glass-2); border:1px solid var(--line); border-radius:9px;
+    padding:9px 11px; margin-bottom:8px;
+  }
+  .job-card:last-child{ margin-bottom:0; }
+  .job-card .jc-title{ font-size:.78rem; font-weight:700; color:var(--text); margin-bottom:2px; }
+  .job-card .jc-meta{ font-size:.7rem; color:var(--muted); line-height:1.4; }
+  .job-card .jc-link{ display:inline-block; margin-top:5px; font-size:.71rem; color:var(--accent); text-decoration:none; }
+  .job-card .jc-link:hover{ text-decoration:underline; }
+  .jobs-status{ font-size:.71rem; color:var(--muted); padding:6px 2px; }
+  .jobs-status.error{ color:#e08a5a; }
+  .jobs-cycle-meta{
+    font-family:var(--mono); font-size:.6rem; color:var(--muted);
+    text-align:right; margin-top:6px; letter-spacing:.03em;
+  }
+
   /* Category chips */
   .cats{ display:flex; flex-wrap:wrap; gap:7px; }
   .chip{
@@ -337,6 +356,12 @@
   <details class="pad hairline supplies-wrap">
     <summary class="label" style="cursor:pointer; margin-bottom:0;">Essential supplies checklist ▾</summary>
     <div id="supplies" style="margin-top:10px"></div>
+  </details>
+
+  <details class="pad hairline supplies-wrap" open>
+    <summary class="label" style="cursor:pointer; margin-bottom:0;">Live job listings (Hernando County) ▾</summary>
+    <div id="jobsPanel" style="margin-top:10px"></div>
+    <div class="jobs-attribution">Job data via <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, sponsored by the U.S. Dept. of Labor.</div>
   </details>
 
   <div class="pad hairline">
@@ -610,6 +635,113 @@ const suppliesEl = document.getElementById('supplies');
   wrap.appendChild(linksWrap);
   suppliesEl.appendChild(wrap);
 });
+
+/* ============ LIVE JOB LISTINGS (CareerOneStop, via career-resource-map backend) ============
+   career-resource-map (github.com/malcolm1014/career-resource-map) is a
+   separate Node/Express backend that proxies the CareerOneStop Web APIs --
+   it has to be a real backend, not client-side JS, because the API Token
+   must never be visible in browser source (view-source on a public
+   GitHub Pages site would hand it to anyone). Set JOBS_API_BASE below to
+   that backend's deployed URL (e.g. a Render Blueprint deploy) to turn
+   this panel on; it degrades to a clear "not configured" message if left
+   blank rather than trying to fetch from nothing.
+
+   Design note on "refresh every 2 minutes, cycling through the listings
+   available": fetches the job list ONCE per page load (or once per full
+   cycle, see JOBS_REFETCH_AFTER_CYCLES below) rather than hitting the API
+   every 2 minutes per visitor -- with the map open in many tabs at once,
+   a true 2-minute re-fetch per tab would burn through CareerOneStop's
+   rate limit fast for no real benefit, since job postings don't turn
+   over that quickly. Instead: one fetch retrieves up to JOBS_PAGE_SIZE
+   listings, and the UI pages through them 5 at a time every 2 minutes,
+   looping back to the first 5 after the last page -- satisfies "cycling
+   through the listings available" literally, refetching only once the
+   full pool has been shown a few times (keeps it feeling live without
+   hammering the backend). */
+const JOBS_API_BASE = ""; // e.g. "https://career-resource-map-xxxx.onrender.com" -- set once deployed
+const JOBS_SEARCH_LOCATION = "Brooksville, FL";
+const JOBS_SEARCH_RADIUS = 25; // miles, covers Hernando County from the county seat
+const JOBS_PAGE_SIZE = 5;
+const JOBS_CYCLE_MS = 2 * 60 * 1000; // 2 minutes
+const JOBS_REFETCH_AFTER_CYCLES = 15; // ~30 min of paging before asking the API for a fresh batch
+
+const jobsPanelEl = document.getElementById("jobsPanel");
+let jobsPool = [];
+let jobsPageIndex = 0;
+let jobsCyclesSinceFetch = 0;
+
+function jobsStatus(msg, isError) {
+  jobsPanelEl.innerHTML = `<div class="jobs-status${isError ? " error" : ""}">${esc(msg)}</div>`;
+}
+
+function renderJobsPage() {
+  if (jobsPool.length === 0) {
+    jobsStatus("No job listings found for Hernando County right now — CareerOneStop's pool may just be empty today. Try CareerSource Pasco Hernando directly (see Job Centers).");
+    return;
+  }
+  const totalPages = Math.ceil(jobsPool.length / JOBS_PAGE_SIZE);
+  const start = jobsPageIndex * JOBS_PAGE_SIZE;
+  const page = jobsPool.slice(start, start + JOBS_PAGE_SIZE);
+
+  const cards = page.map(job => {
+    const title = job.JobTitle || job.Title || job.jobTitle || "Job listing";
+    const company = job.Company || job.CompanyName || job.company || "";
+    const location = job.Location || job.location || [job.City, job.State].filter(Boolean).join(", ");
+    const url = job.URL || job.Url || job.url || "";
+    const meta = [company, location].filter(Boolean).join(" · ");
+    return `<div class="job-card">
+              <div class="jc-title">${esc(title)}</div>
+              ${meta ? `<div class="jc-meta">${esc(meta)}</div>` : ""}
+              ${url ? `<a class="jc-link" href="${esc(url)}" target="_blank" rel="noopener">View listing ↗</a>` : ""}
+            </div>`;
+  }).join("");
+
+  jobsPanelEl.innerHTML = cards +
+    `<div class="jobs-cycle-meta">showing ${start + 1}–${start + page.length} of ${jobsPool.length} · page ${jobsPageIndex + 1}/${totalPages} · next batch in 2 min</div>`;
+}
+
+function advanceJobsPage() {
+  if (jobsPool.length === 0) return;
+  const totalPages = Math.ceil(jobsPool.length / JOBS_PAGE_SIZE);
+  jobsPageIndex = (jobsPageIndex + 1) % totalPages; // loop back to the start after the last page
+  jobsCyclesSinceFetch++;
+  if (jobsCyclesSinceFetch >= JOBS_REFETCH_AFTER_CYCLES) {
+    fetchJobsPool();
+  } else {
+    renderJobsPage();
+  }
+}
+
+async function fetchJobsPool() {
+  if (!JOBS_API_BASE) {
+    jobsStatus("Live job listings aren't turned on yet for this map — the backend that fetches them (career-resource-map) hasn't been deployed. See index.html's JOBS_API_BASE.");
+    return;
+  }
+  jobsStatus("Loading job listings…");
+  try {
+    const qs = new URLSearchParams({
+      location: JOBS_SEARCH_LOCATION,
+      radius: String(JOBS_SEARCH_RADIUS),
+      keyword: "0",
+      days: "30",
+    }).toString();
+    const resp = await fetch(`${JOBS_API_BASE}/api/jobs?${qs}`);
+    const body = await resp.json();
+    if (!resp.ok) {
+      throw new Error(body.error || `Jobs request failed (${resp.status})`);
+    }
+    jobsPool = body.Jobs || body.JobList || [];
+    jobsPageIndex = 0;
+    jobsCyclesSinceFetch = 0;
+    renderJobsPage();
+  } catch (e) {
+    console.error("Live job listings fetch failed:", e);
+    jobsStatus("Live job listings are temporarily unavailable. (CareerOneStop's Jobs API is still being set up for this account — see career-resource-map's README for details.)", true);
+  }
+}
+
+fetchJobsPool();
+setInterval(advanceJobsPage, JOBS_CYCLE_MS);
 
 refresh();
 </script>
