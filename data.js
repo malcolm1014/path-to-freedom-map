@@ -354,3 +354,31 @@ const SUPPLIES = [
     ]
   }
 ];
+
+/* =====================================================================
+   QUICK_REF — the "if you need help right now" phone strip. `statewide`
+   entries show for every county (911 always works; 211 is a real
+   statewide network in Florida, each county routed to its own regional
+   211 call center by the phone system, not a single office; 988 and the
+   national DV line are federal, same number everywhere). Per-county keys
+   (matching a RESOURCES row's `county` field) add that county's own
+   fastest-path numbers on top — built out for Hernando first since
+   that's the only county with full category depth so far; add a new key
+   here as each county gets its own hub/shelter/DV-line entries researched
+   and verified, same rigor as the RESOURCES rows themselves (no guessing
+   a county's crisis-line numbers from a directory listing alone).
+   ===================================================================== */
+const QUICK_REF = {
+  statewide: [
+    { need:"Emergency", num:"911", tel:"911" },
+    { need:"General — where do I start?", num:"Dial 211", tel:"211" },
+    { need:"Suicide & crisis (24hr, national)", num:"988", tel:"988" },
+    { need:"Domestic violence (24hr, national)", num:"1-800-799-7233", tel:"18007997233" }
+  ],
+  Hernando: [
+    { need:"Housing system entry", num:"352-860-2308", tel:"3528602308" },
+    { need:"Meals, showers, clinic (PHP)", num:"352-686-4466", tel:"3526864466" },
+    { need:"Domestic violence — local 24hr line", num:"352-686-8430", tel:"3526868430" },
+    { need:"Rent/utility emergency help", num:"352-686-9897", tel:"3526889897" }
+  ]
+};

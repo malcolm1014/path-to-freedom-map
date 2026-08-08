@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Free interactive map of homelessness and poverty resources in Hernando County, FL — food pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics & mental health, free computers/workspace, shower access, and the coordinating agencies (211, Mid Florida Homeless Coalition, People Helping People) that connect them.">
-<title>Path to Freedom — Hernando County Resource Map</title>
+<meta name="description" content="Free interactive map of homelessness and poverty resources across Florida — food pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics & mental health, free computers/workspace, shower access, and the coordinating agencies (211, homeless coalitions, community action agencies) that connect them. Growing county by county.">
+<title>Path to Freedom — Florida Resource Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Path to Freedom">
-<meta property="og:title" content="Path to Freedom — Hernando County Resource Map">
-<meta property="og:description" content="Free interactive map of homelessness and poverty resources in Hernando County, FL — pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics, and coordinating agencies.">
+<meta property="og:title" content="Path to Freedom — Florida Resource Map">
+<meta property="og:description" content="Free interactive map of homelessness and poverty resources across Florida — pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics, and coordinating agencies. Growing county by county.">
 
 <!-- Leaflet + markercluster from CDN — no build tools, no API keys -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -335,22 +335,23 @@
 <aside id="panel">
   <header class="pad hairline">
     <h1><span class="mark">◆</span>Path to Freedom</h1>
-    <p class="sub">Homelessness &amp; poverty resources across Hernando County, FL — pantries, shelters, clothing, transportation, and the agencies that tie them together.</p>
-    <div class="status"><b id="visCount"></b> RESOURCES SHOWN</div>
+    <p class="sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
+    <div class="status"><b id="visCount"></b> RESOURCES SHOWN <span id="countyCoverage" style="opacity:.7"></span></div>
   </header>
 
   <div id="panelbody">
 
   <div class="pad hairline">
-    <div class="label">If you need help right now</div>
-    <div class="qref">
-      <a href="tel:211"><span class="need">General — where do I start?</span><span class="num">Dial 211</span></a>
-      <a href="tel:3528602308"><span class="need">Housing system entry</span><span class="num">352-860-2308</span></a>
-      <a href="tel:3526864466"><span class="need">Meals, showers, clinic (PHP)</span><span class="num">352-686-4466</span></a>
-      <a href="tel:3526868430"><span class="need">Domestic violence — 24hr</span><span class="num">352-686-8430</span></a>
-      <a href="tel:3526889897"><span class="need">Rent/utility emergency help</span><span class="num">352-686-9897</span></a>
+    <div class="label">County</div>
+    <div class="searchwrap" style="margin-bottom:0;">
+      <select id="countySel" style="width:100%; padding:9px 12px; border-radius:10px; background:var(--glass-2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-size:.82rem;"></select>
     </div>
-    <p class="safety"><b>In immediate danger? Call 911.</b> Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Church pantry rows sourced from a countywide sheet last dated Oct 2021 say so in their notes; call to confirm. The Dawn Center's shelter location is intentionally not published — call its hotline, don't try to find the building.</p>
+  </div>
+
+  <div class="pad hairline">
+    <div class="label">If you need help right now</div>
+    <div class="qref" id="qref"></div>
+    <p class="safety"><b>In immediate danger? Call 911.</b> Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Where a shelter's location is intentionally not published for resident safety (see its notes), call its hotline — don't try to find the building.</p>
   </div>
 
   <details class="pad hairline supplies-wrap">
@@ -359,7 +360,7 @@
   </details>
 
   <details class="pad hairline supplies-wrap" open>
-    <summary class="label" style="cursor:pointer; margin-bottom:0;">Live job listings (Hernando County) ▾</summary>
+    <summary class="label" style="cursor:pointer; margin-bottom:0;">Live job listings <span id="jobsCountyLabel"></span> ▾</summary>
     <div id="jobsPanel" style="margin-top:10px"></div>
     <div class="jobs-attribution">Job data via <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, sponsored by the U.S. Dept. of Labor.</div>
   </details>
@@ -388,6 +389,8 @@
 <script src="data.js"></script>
 <!-- Precise Hernando County boundary polygon (real Census data, not hand-drawn) -->
 <script src="boundary.js"></script>
+<!-- All 67 Florida county boundaries, simplified, for the statewide drill-down -->
+<script src="FL_COUNTY_GEO.js"></script>
 <script>
 /* Fixed display order — priority for this map (urgent needs first), not the
    underlying palette's own adjacency order; every dot always ships beside a
@@ -419,8 +422,8 @@ function milesTo(a, b){
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/* ============ MAP SETUP — centered on Hernando County ============ */
-const map = L.map('map', { zoomControl:false }).setView([28.495, -82.455], 11);
+/* ============ MAP SETUP — statewide Florida default view ============ */
+const map = L.map('map', { zoomControl:false }).setView([27.9, -81.5], 7);
 L.control.zoom({ position:'topright' }).addTo(map);
 
 /* "Streets" basemap only — full street-name and address-level labeling,
@@ -430,7 +433,31 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
   attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20
 }).addTo(map);
 
-/* Precise Hernando County line — boundary.js, real Census TIGERweb data */
+/* All 67 FL counties, thin/muted — the statewide context layer. Counties
+   that actually have RESOURCES data get a slightly stronger line so it's
+   visually obvious at a glance which parts of the state are populated so
+   far; the selected county (if any) gets the full accent highlight.
+   Click a shape to drill into that county, same as picking it from the
+   dropdown — see selectCounty() below. */
+const countiesWithData = new Set(RESOURCES.map(r => r.county));
+let countyLayer = null, selectedCountyLayer = null;
+countyLayer = L.geoJSON(FL_COUNTY_GEO, {
+  style: f => {
+    const has = countiesWithData.has(f.properties.name);
+    return { color: has ? getCSS('--muted') : getCSS('--line'), weight: has ? 1.4 : .8,
+             opacity: has ? .8 : .45, fill:true, fillOpacity: has ? .05 : 0 };
+  },
+  onEachFeature: (f, layer) => {
+    layer.on('click', () => selectCounty(f.properties.name));
+    layer.bindTooltip(f.properties.name + (countiesWithData.has(f.properties.name) ? '' : ' (no data yet)'),
+      { sticky:true, className:'', opacity:.9 });
+  }
+}).addTo(map);
+
+/* Precise Hernando County line — boundary.js, real Census TIGERweb data.
+   Kept as its own always-on detail layer regardless of selection, since
+   it's the flagship/home county and by far the most precise outline
+   (2068 vertices vs. the statewide layer's simplified ~20-40 per county). */
 L.geoJSON(HERNANDO_BOUNDARY, {
   style:{ color:getCSS('--accent'), weight:2, opacity:.85, fill:false, dashArray:'2 6' }
 }).addTo(map);
@@ -500,9 +527,11 @@ const markers = RESOURCES.map(r => {
 /* ============ STATE + FILTERING ============ */
 const enabledCats = new Set(Object.keys(CATEGORIES));
 let searchTerm = "";
+let selectedCounty = null; // null = All Florida
 
 function visible(r){
   return enabledCats.has(r.category)
+    && (!selectedCounty || r.county === selectedCounty)
     && (searchTerm === "" || (r.name + " " + r.city).toLowerCase().includes(searchTerm));
 }
 
@@ -527,6 +556,59 @@ function refresh(){
   });
   document.getElementById('empty').style.display = shown.length ? 'none' : 'block';
   document.getElementById('visCount').textContent = shown.length;
+}
+
+/* ============ COUNTY SELECTOR ============ */
+const ALL_FL_COUNTIES = FL_COUNTY_GEO.features.map(f => f.properties.name).sort();
+const countySelEl = document.getElementById('countySel');
+(() => {
+  const optAll = document.createElement('option');
+  optAll.value = ""; optAll.textContent = `All Florida (${countiesWithData.size} of 67 counties have data so far)`;
+  countySelEl.appendChild(optAll);
+  for (const name of ALL_FL_COUNTIES){
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = countiesWithData.has(name) ? name : `${name} (no data yet)`;
+    countySelEl.appendChild(opt);
+  }
+})();
+countySelEl.addEventListener('change', () => selectCounty(countySelEl.value || null, { fly:true }));
+
+function selectCounty(name, opts){
+  opts = opts || {};
+  selectedCounty = name || null;
+  countySelEl.value = selectedCounty || "";
+  document.getElementById('countyCoverage').textContent =
+    selectedCounty ? `· ${selectedCounty} County` : "";
+
+  if (selectedCountyLayer){ countyLayer.resetStyle(selectedCountyLayer); selectedCountyLayer = null; }
+  if (selectedCounty){
+    countyLayer.eachLayer(layer => {
+      if (layer.feature.properties.name === selectedCounty){
+        selectedCountyLayer = layer;
+        layer.setStyle({ color:getCSS('--accent'), weight:2.5, opacity:.9,
+                          fill:true, fillOpacity:.08 });
+        layer.bringToFront();
+        if (opts.fly !== false) map.flyToBounds(layer.getBounds(), { duration:.8, padding:[20,20] });
+      }
+    });
+  } else if (opts.fly !== false){
+    map.flyTo([27.9, -81.5], 7, { duration:.8 });
+  }
+
+  renderQuickRef();
+  refreshJobsForCounty();
+  refresh();
+}
+
+/* ============ QUICK REFERENCE (statewide + per-county) ============ */
+function renderQuickRef(){
+  const el = document.getElementById('qref');
+  const rows = (QUICK_REF.statewide || [])
+    .concat(selectedCounty ? (QUICK_REF[selectedCounty] || []) : []);
+  el.innerHTML = rows.map(r =>
+    `<a href="tel:${esc(r.tel)}"><span class="need">${esc(r.need)}</span><span class="num">${esc(r.num)}</span></a>`
+  ).join("");
 }
 
 /* ============ PANEL UI ============ */
@@ -659,8 +741,7 @@ const suppliesEl = document.getElementById('supplies');
    full pool has been shown a few times (keeps it feeling live without
    hammering the backend). */
 const JOBS_API_BASE = "https://career-resource-map.onrender.com";
-const JOBS_SEARCH_LOCATION = "Brooksville, FL";
-const JOBS_SEARCH_RADIUS = 25; // miles, covers Hernando County from the county seat
+const JOBS_SEARCH_RADIUS = 25; // miles
 const JOBS_PAGE_SIZE = 5;
 const JOBS_CYCLE_MS = 2 * 60 * 1000; // 2 minutes
 const JOBS_REFETCH_AFTER_CYCLES = 15; // ~30 min of paging before asking the API for a fresh batch
@@ -676,7 +757,7 @@ function jobsStatus(msg, isError) {
 
 function renderJobsPage() {
   if (jobsPool.length === 0) {
-    jobsStatus("No job listings found for Hernando County right now — CareerOneStop's pool may just be empty today. Try CareerSource Pasco Hernando directly (see Job Centers).");
+    jobsStatus(`No job listings found for ${selectedCounty} County right now — CareerOneStop's pool may just be empty today. Try the Job Centers category on the map for that county.`);
     return;
   }
   const totalPages = Math.ceil(jobsPool.length / JOBS_PAGE_SIZE);
@@ -713,14 +794,16 @@ function advanceJobsPage() {
 }
 
 async function fetchJobsPool() {
+  if (!selectedCounty) return; // gated by refreshJobsForCounty()
   if (!JOBS_API_BASE) {
     jobsStatus("Live job listings aren't turned on yet for this map — the backend that fetches them (career-resource-map) hasn't been deployed. See index.html's JOBS_API_BASE.");
     return;
   }
   jobsStatus("Loading job listings…");
+  const location = `${selectedCounty} County, FL`;
   try {
     const qs = new URLSearchParams({
-      location: JOBS_SEARCH_LOCATION,
+      location,
       radius: String(JOBS_SEARCH_RADIUS),
       keyword: "0",
       days: "30",
@@ -740,10 +823,24 @@ async function fetchJobsPool() {
   }
 }
 
-fetchJobsPool();
-setInterval(advanceJobsPage, JOBS_CYCLE_MS);
+/* Called by selectCounty() on every change — job listings are inherently
+   per-county (CareerOneStop needs a real location string), so there's no
+   sensible "All Florida" jobs query. Prompt for a county instead of
+   silently querying something misleading. */
+let jobsTimer = null;
+function refreshJobsForCounty(){
+  document.getElementById('jobsCountyLabel').textContent = selectedCounty ? `(${selectedCounty} County)` : "";
+  if (jobsTimer){ clearInterval(jobsTimer); jobsTimer = null; }
+  if (!selectedCounty){
+    jobsPool = []; jobsPageIndex = 0; jobsCyclesSinceFetch = 0;
+    jobsStatus("Pick a county above to see live local job listings.");
+    return;
+  }
+  fetchJobsPool();
+  jobsTimer = setInterval(advanceJobsPage, JOBS_CYCLE_MS);
+}
 
-refresh();
+selectCounty(null, { fly:false });
 </script>
 </body>
 </html>
