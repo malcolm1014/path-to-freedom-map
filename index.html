@@ -64,6 +64,7 @@
 
     --sans: 'Space Grotesk', system-ui, sans-serif;
     --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --tabbar-h: 58px;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ height:100%; }
@@ -94,7 +95,9 @@
   }
   #credit-badge a{ color:var(--accent); text-decoration:none; }
   #credit-badge a:hover{ text-decoration:underline; }
-  @media (max-width:760px){ #credit-badge{ right:8px; bottom:auto; top:78px; } }
+  @media (max-width:760px){
+    #credit-badge{ right:8px; bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px); top:auto; }
+  }
 
   /* ============ FLOATING PANEL ============ */
   #panel{
@@ -321,12 +324,36 @@
   }
   .cluster:hover{ transform:scale(1.12); }
 
-  /* ============ MOBILE ============ */
+  /* ============ MOBILE TAB BAR (Map / List) ============ */
+  #mobileTabs{ display:none; }
+  @media (max-width:760px){
+    #mobileTabs{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1300;
+      height:var(--tabbar-h); padding-bottom:env(safe-area-inset-bottom);
+      background:var(--glass); backdrop-filter:blur(18px) saturate(1.25);
+      -webkit-backdrop-filter:blur(18px) saturate(1.25);
+      border-top:1px solid var(--line);
+    }
+    #mobileTabs button{
+      flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:2px; background:none; border:none; cursor:pointer;
+      font-family:var(--sans); font-size:.68rem; font-weight:500;
+      color:var(--muted); transition:color .15s ease;
+    }
+    #mobileTabs button .ico{ font-size:1.15rem; line-height:1; }
+    #mobileTabs button[aria-pressed="true"]{ color:var(--accent); }
+    #mobileTabs button:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  }
+
+  /* ============ MOBILE PANEL (full-screen List tab, hidden on Map tab) ============ */
   @media (max-width:760px){
     #panel{
-      top:auto; left:0; right:0; bottom:0; width:100%;
-      max-height:58vh; border-radius:16px 16px 0 0; border-bottom:none;
+      display:none;
+      top:0; left:0; right:0; width:100%;
+      bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+      max-height:none; border-radius:0; border:none;
     }
+    body.mobile-list-active #panel{ display:flex; }
     header .sub{ display:none; }
   }
   @media (prefers-reduced-motion: reduce){
@@ -393,6 +420,14 @@
 
   <footer>data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · © OpenStreetMap · CARTO</footer>
 </aside>
+
+<!-- Mobile-only bottom nav: map stays full-bleed under the List tab's
+     full-screen panel; JS toggles body.mobile-list-active. Hidden entirely
+     above 760px via the #mobileTabs media rule, so desktop is unaffected. -->
+<nav id="mobileTabs" role="tablist" aria-label="View">
+  <button id="tabMap" role="tab" aria-pressed="true" aria-controls="map"><span class="ico">◈</span>Map</button>
+  <button id="tabList" role="tab" aria-pressed="false" aria-controls="panel"><span class="ico">☰</span>List</button>
+</nav>
 
 <!-- Resource rows live in data.js -->
 <script src="data.js"></script>
@@ -642,8 +677,22 @@ document.getElementById('search').addEventListener('input', e => {
   refresh();
 });
 
+/* ============ MOBILE MAP/LIST TABS ============ */
+const isMobile = () => window.matchMedia('(max-width:760px)').matches;
+const tabMapBtn = document.getElementById('tabMap');
+const tabListBtn = document.getElementById('tabList');
+function setMobileView(view){
+  const isList = view === 'list';
+  document.body.classList.toggle('mobile-list-active', isList);
+  tabMapBtn.setAttribute('aria-pressed', String(!isList));
+  tabListBtn.setAttribute('aria-pressed', String(isList));
+}
+tabMapBtn.addEventListener('click', () => setMobileView('map'));
+tabListBtn.addEventListener('click', () => setMobileView('list'));
+
 /* Reveal a marker even if it's clustered (or filtered out) */
 function revealMarker(m){
+  if (isMobile()) setMobileView('map'); // jump back to the map so the pin/popup is actually visible
   if (clusters.hasLayer(m)){
     clusters.zoomToShowLayer(m, () => m.openPopup());
   } else {
