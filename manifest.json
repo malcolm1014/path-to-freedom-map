@@ -1,0 +1,15 @@
+{
+  "name": "Path to Freedom — Florida Resource Map",
+  "short_name": "Path to Freedom",
+  "description": "Free map of homelessness and poverty resources across Florida — shelters, food, clothing, transportation, clinics, and hotlines.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f0c",
+  "theme_color": "#0a0f0c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

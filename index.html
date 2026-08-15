@@ -6,6 +6,13 @@
 <meta name="description" content="Free interactive map of homelessness and poverty resources across Florida — food pantries, shelters, thrift/clothing vouchers, pet food, transportation, clinics & mental health, free computers/workspace, shower access, and the coordinating agencies (211, homeless coalitions, community action agencies) that connect them. Growing county by county.">
 <title>Path to Freedom — Florida Resource Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0a0f0c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Path to Freedom">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Path to Freedom">
@@ -356,6 +363,58 @@
     body.mobile-list-active #panel{ display:flex; }
     header .sub{ display:none; }
   }
+
+  /* ============ LOCATION BANNER (soft-prompt, mobile only) ============
+     Shown once over the Map tab on first visit (if geolocation exists and
+     it hasn't already been dismissed/used) — offers to jump straight to
+     nearby resources instead of making someone hunt for the manual
+     "Near me" control themselves. Sits well below the Leaflet zoom
+     control (top-right) so the two never overlap. */
+  #locBanner{ display:none; }
+  @media (max-width:760px){
+    #locBanner.visible{
+      display:flex; flex-direction:column; gap:10px;
+      position:fixed; left:12px; right:12px; z-index:1250;
+      top:calc(env(safe-area-inset-top) + 80px);
+      background:var(--glass); backdrop-filter:blur(18px) saturate(1.25);
+      -webkit-backdrop-filter:blur(18px) saturate(1.25);
+      border:1px solid var(--line); border-radius:14px;
+      box-shadow:0 16px 44px rgba(0,0,0,.5);
+      padding:14px 16px;
+    }
+    body.mobile-list-active #locBanner.visible{ display:none; }
+    #locBanner .lb-text{ font-size:.82rem; line-height:1.45; color:var(--text); }
+    #locBanner .lb-actions{ display:flex; gap:8px; }
+    #locBanner button{
+      font-family:var(--sans); font-size:.78rem; font-weight:500; cursor:pointer;
+      border-radius:10px; padding:10px 14px; border:1px solid var(--line);
+    }
+    #locBanner .lb-primary{ background:var(--accent); color:#07110a; border-color:var(--accent); flex:1; font-weight:700; }
+    #locBanner .lb-dismiss{ background:var(--glass-2); color:var(--muted); }
+  }
+
+  /* ============ OUTDOOR READABILITY + BIGGER TOUCH TARGETS (mobile) ============
+     The realistic userbase for this map is disproportionately people
+     viewing it outdoors, on older/budget phones, sometimes under stress —
+     so mobile gets its own pass independent of desktop: a modest global
+     type-scale bump, higher-contrast muted text/borders (the desktop
+     values are tuned for an indoor screen and wash out in direct sun),
+     and larger tap targets throughout (list rows, chips, search, pins). */
+  @media (max-width:760px){
+    html{ font-size:110%; }
+    body{
+      --muted: #B7CCB9;
+      --line: rgba(183,204,185,.34);
+    }
+    .item{ padding:13px 18px; }
+    .item .t{ font-size:.86rem; }
+    .item .m{ font-size:.68rem; }
+    .chip{ padding:9px 14px 9px 11px; font-size:.78rem; }
+    .chip .dot{ width:10px; height:10px; }
+    #search{ padding:12px 12px 12px 34px; font-size:.88rem; }
+    #nearme{ padding:9px 14px; font-size:.72rem; }
+    .pin{ width:17px; height:17px; border-width:2.5px; }
+  }
   @media (prefers-reduced-motion: reduce){
     .pin, .chip, .item{ transition:none; }
     .you{ animation:none; }
@@ -429,6 +488,14 @@
   <button id="tabList" role="tab" aria-pressed="false" aria-controls="panel"><span class="ico">☰</span>List</button>
 </nav>
 
+<div id="locBanner" role="region" aria-label="Use your location">
+  <div class="lb-text">Find shelters, food, and help closest to you right now?</div>
+  <div class="lb-actions">
+    <button id="lbYes" class="lb-primary">◎ Use my location</button>
+    <button id="lbNo" class="lb-dismiss">Not now</button>
+  </div>
+</div>
+
 <!-- Resource rows live in data.js -->
 <script src="data.js"></script>
 <!-- Precise Hernando County boundary polygon (real Census data, not hand-drawn) -->
@@ -459,6 +526,7 @@ const CATEGORIES = {
 
 function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function isMobile(){ return window.matchMedia('(max-width:760px)').matches; }
 function milesTo(a, b){
   const R = 3958.8, toR = d => d * Math.PI / 180;
   const dLat = toR(b.lat - a.lat), dLng = toR(b.lng - a.lng);
@@ -514,7 +582,10 @@ const clusters = L.markerClusterGroup({
   disableClusteringAtZoom: 13,
   iconCreateFunction: c => {
     const n = c.getChildCount();
-    const size = n < 10 ? 34 : n < 25 ? 40 : 46;
+    // Bigger bubbles on mobile — easier to hit with a thumb, easier to
+    // read outdoors, matches the larger pin size below.
+    const sizes = isMobile() ? [40, 48, 54] : [34, 40, 46];
+    const size = n < 10 ? sizes[0] : n < 25 ? sizes[1] : sizes[2];
     return L.divIcon({
       className:'', iconSize:[size, size],
       html:`<div class="cluster" style="width:${size}px;height:${size}px">${n}</div>`
@@ -523,10 +594,13 @@ const clusters = L.markerClusterGroup({
 });
 map.addLayer(clusters);
 
-/* Markers */
+/* Markers — bigger hit box + visual size on mobile (see .pin's mobile
+   media-query rule for the matching visual bump). Decided once at marker
+   creation time since it's set on page load, before any resize matters. */
 function makeIcon(color){
+  const s = isMobile() ? 22 : 17;
   return L.divIcon({
-    className:'', iconSize:[17,17], iconAnchor:[8,8], popupAnchor:[0,-10],
+    className:'', iconSize:[s, s], iconAnchor:[s/2, s/2], popupAnchor:[0, -(s/2) - 2],
     html:`<div class="pin" style="--pc:${color}"></div>`
   });
 }
@@ -645,6 +719,25 @@ function selectCounty(name, opts){
   refresh();
 }
 
+/* Best-effort reverse geocode (Nominatim, no API key) from a lat/lng to
+   one of this project's FL county names, so "use my location" can jump
+   straight to the right county instead of leaving someone on the
+   statewide view. Silently gives up on any failure/mismatch — the
+   distance-sorted "near me" list still works fine without a county
+   match, this is a nice-to-have on top of it, not a dependency. */
+async function detectCountyFromLocation(loc){
+  try{
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${loc.lat}&lon=${loc.lng}&zoom=10&addressdetails=1`);
+    if (!resp.ok) return;
+    const body = await resp.json();
+    const raw = (body && body.address && (body.address.county || body.address.state_district)) || "";
+    const county = raw.replace(/\s+County$/i, "").trim();
+    if (county && ALL_FL_COUNTIES.includes(county) && county !== selectedCounty){
+      selectCounty(county, { fly:false }); // fly:false — already flying to the precise user location elsewhere
+    }
+  } catch(e){ /* offline/blocked/unexpected shape — fine, degrade silently */ }
+}
+
 /* ============ QUICK REFERENCE (statewide + per-county) ============ */
 function renderQuickRef(){
   const el = document.getElementById('qref');
@@ -678,7 +771,6 @@ document.getElementById('search').addEventListener('input', e => {
 });
 
 /* ============ MOBILE MAP/LIST TABS ============ */
-const isMobile = () => window.matchMedia('(max-width:760px)').matches;
 const tabMapBtn = document.getElementById('tabMap');
 const tabListBtn = document.getElementById('tabList');
 function setMobileView(view){
@@ -702,9 +794,31 @@ function revealMarker(m){
   }
 }
 
-/* ============ NEAR ME (geolocation → distance sort) ============ */
+/* ============ NEAR ME (geolocation → distance sort) ============
+   activateNearMe() is the shared success path for both the manual "Near
+   me" button and the location banner's "Use my location" button — same
+   underlying capability, two entry points. { detectCounty, switchToList }
+   let each caller opt into the extra jump-to-county/jump-to-list behavior
+   independently (both callers currently use both). */
 let userLoc = null, userMarker = null;
 const nearBtn = document.getElementById('nearme');
+
+function activateNearMe(pos, opts){
+  opts = opts || {};
+  userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+  nearBtn.setAttribute('aria-pressed', 'true');
+  nearBtn.textContent = "◎ Near me — on";
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.marker([userLoc.lat, userLoc.lng], {
+    icon: L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9], html:'<div class="you"></div>' }),
+    interactive: false
+  }).addTo(map);
+  map.flyTo([userLoc.lat, userLoc.lng], 13, {duration:.8});
+  refresh();
+  if (opts.detectCounty) detectCountyFromLocation(userLoc);
+  if (opts.switchToList && isMobile()) setMobileView('list');
+}
+
 nearBtn.onclick = () => {
   if (userLoc){
     userLoc = null;
@@ -716,21 +830,44 @@ nearBtn.onclick = () => {
   }
   if (!navigator.geolocation){ nearBtn.textContent = "◎ location unavailable"; return; }
   nearBtn.textContent = "◎ locating…";
-  navigator.geolocation.getCurrentPosition(pos => {
-    userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    nearBtn.setAttribute('aria-pressed', 'true');
-    nearBtn.textContent = "◎ Near me — on";
-    userMarker = L.marker([userLoc.lat, userLoc.lng], {
-      icon: L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9], html:'<div class="you"></div>' }),
-      interactive: false
-    }).addTo(map);
-    map.flyTo([userLoc.lat, userLoc.lng], 13, {duration:.8});
-    refresh();
-  }, () => {
-    nearBtn.textContent = "◎ location blocked";
-    setTimeout(() => { nearBtn.textContent = "◎ Near me"; }, 2500);
-  }, { timeout: 10000 });
+  navigator.geolocation.getCurrentPosition(
+    pos => activateNearMe(pos, { detectCounty:true, switchToList:true }),
+    () => {
+      nearBtn.textContent = "◎ location blocked";
+      setTimeout(() => { nearBtn.textContent = "◎ Near me"; }, 2500);
+    },
+    { timeout: 10000 }
+  );
 };
+
+/* ============ LOCATION BANNER (soft-prompt over the Map tab, mobile only) ============
+   Offers the same capability up front instead of waiting for someone to
+   find the small "Near me" control buried in the List tab. Shown once —
+   remembered via localStorage so it doesn't nag on repeat visits, with a
+   try/catch since some private-browsing modes throw on storage access. */
+const LB_DISMISSED_KEY = 'ptf_locBannerDismissed';
+const locBannerEl = document.getElementById('locBanner');
+function hideLocBanner(){
+  locBannerEl.classList.remove('visible');
+  try { localStorage.setItem(LB_DISMISSED_KEY, '1'); } catch(e){ /* private mode, etc — fine, just won't be remembered */ }
+}
+(function initLocBanner(){
+  if (!isMobile() || !navigator.geolocation) return;
+  try { if (localStorage.getItem(LB_DISMISSED_KEY)) return; } catch(e){ /* fall through and show it */ }
+  locBannerEl.classList.add('visible');
+})();
+document.getElementById('lbYes').addEventListener('click', () => {
+  const btn = document.getElementById('lbYes');
+  btn.textContent = "◎ Locating…";
+  navigator.geolocation.getCurrentPosition(pos => {
+    hideLocBanner();
+    activateNearMe(pos, { detectCounty:true, switchToList:true });
+  }, () => {
+    btn.textContent = "◎ Location blocked — try Near Me in the list";
+    setTimeout(hideLocBanner, 3200);
+  }, { timeout: 10000 });
+});
+document.getElementById('lbNo').addEventListener('click', hideLocBanner);
 
 /* ============ SUPPLIES CHECKLIST ============ */
 const suppliesEl = document.getElementById('supplies');
@@ -899,6 +1036,16 @@ function refreshJobsForCounty(){
 }
 
 selectCounty(null, { fly:false });
+
+/* ============ PWA: SERVICE WORKER (offline resilience + installability) ============
+   Lets the map be added to a home screen and keeps the app shell + any
+   already-viewed map tiles working on a weak or dropped connection —
+   see sw.js for the actual caching strategy per resource type. */
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* not fatal — map still works without it */ });
+  });
+}
 </script>
 </body>
 </html>
