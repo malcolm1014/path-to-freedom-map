@@ -709,9 +709,35 @@ const countySelEl = document.getElementById('countySel');
 })();
 countySelEl.addEventListener('change', () => selectCounty(countySelEl.value || null, { fly:true }));
 
+/* Mobile back-button history depth (see the MOBILE BACK BUTTON block near
+   the end of this script for the full picture): entering a county from
+   the statewide view pushes ONE history entry so back can return to
+   statewide, same idea as the popup-level entry pin taps push. Declared
+   up here, ahead of selectCounty()'s first call a few hundred lines down
+   (the initial statewide setup), rather than down by the rest of the
+   back-button code, which only registers event *handlers* (fine to do
+   later) but doesn't need these variables to exist yet at that point. */
+let ptfCountyPushed = false;
+let ptfProgrammaticHistoryPop = false;
+
 function selectCounty(name, opts){
   opts = opts || {};
+  const wasCounty = !!selectedCounty;
   selectedCounty = name || null;
+  const isCounty = !!selectedCounty;
+  if (isMobile()){
+    if (isCounty && !wasCounty && !ptfCountyPushed){
+      history.pushState({ ptfLevel:'county' }, '');
+      ptfCountyPushed = true;
+    } else if (!isCounty && wasCounty && ptfCountyPushed){
+      // Deselected some other way than the back button (e.g. picking
+      // "All Florida" from the dropdown) — pop the now-stale entry so
+      // it doesn't linger and eat an extra back press later.
+      ptfCountyPushed = false;
+      ptfProgrammaticHistoryPop = true;
+      history.back();
+    }
+  }
   countySelEl.value = selectedCounty || "";
   document.getElementById('countyCoverage').textContent =
     selectedCounty ? `· ${selectedCounty} County` : "";
@@ -1103,16 +1129,28 @@ selectCounty(null, { fly:false });
    collapsed there; desktop keeps it open since there's space to spare. */
 if (isMobile()) document.getElementById('jobsPanel').closest('details').removeAttribute('open');
 
-/* ============ MOBILE BACK BUTTON CLOSES THE POPUP, NOT THE PAGE ============
+/* ============ MOBILE BACK BUTTON: POPUP → COUNTY → STATEWIDE → EXIT ============
    Without this, tapping a pin opens its popup but the phone's hardware/
    gesture back button still just navigates the browser away from the
-   site (nothing was ever pushed to history). Standard fix: push a dummy
-   history entry the moment a popup opens, so the very next back press
-   only pops that entry (handled here as a popstate — close the popup,
-   land back on the map) instead of leaving the page. If the popup gets
-   closed some other way (tapping the map), the dummy entry is popped
-   programmatically so it doesn't linger and force a second back press
-   later. Mobile-only — desktop back should behave like a normal page.
+   site (nothing was ever pushed to history). Fix: push a dummy history
+   entry for each of the two "drill-down" levels this map has — entering
+   a county from statewide (pushed inside selectCounty() above) and
+   opening a pin's popup within that county (pushed here) — so back
+   unwinds one level at a time: first press closes the popup back to the
+   county view, second press returns to statewide, third press actually
+   leaves the site (there's nothing left of ours on the stack by then).
+   Mobile-only — desktop back should behave like a normal page.
+
+   Both levels share one `popstate` listener below, checked in priority
+   order (popup first, since it's always the more-recently-pushed entry
+   whenever both exist — browser back always unwinds the stack in strict
+   LIFO order, so there's no ambiguity about which level a given press
+   belongs to). `ptfProgrammaticHistoryPop` guards the cases where THIS
+   code calls `history.back()` itself to clean up a stale entry (e.g. the
+   popup being closed by tapping the map, or the county being cleared via
+   the dropdown, rather than an actual back press) — without it, that
+   self-triggered popstate would be misread as a real back press and
+   incorrectly unwind the level underneath too.
 
    Switching directly from one pin's popup to another's is trickier than
    it looks: Leaflet closes the old popup and opens the new one
@@ -1126,7 +1164,7 @@ let ptfHistoryPushed = false;
 map.on('popupopen', () => {
   ptfAnyPopupOpen = true;
   if (!isMobile() || ptfHistoryPushed) return;
-  history.pushState({ ptfPopup:true }, '');
+  history.pushState({ ptfLevel:'popup' }, '');
   ptfHistoryPushed = true;
 });
 map.on('popupclose', () => {
@@ -1135,13 +1173,24 @@ map.on('popupclose', () => {
   setTimeout(() => {
     if (ptfAnyPopupOpen || !ptfHistoryPushed) return;
     ptfHistoryPushed = false;
+    ptfProgrammaticHistoryPop = true;
     history.back();
   }, 0);
 });
 window.addEventListener('popstate', () => {
-  if (!ptfHistoryPushed) return;
-  ptfHistoryPushed = false;
-  map.closePopup();
+  if (ptfProgrammaticHistoryPop){
+    ptfProgrammaticHistoryPop = false;
+    return; // this was our own cleanup pop, not a real back press — nothing more to do
+  }
+  if (ptfHistoryPushed){
+    ptfHistoryPushed = false;
+    map.closePopup();
+    return;
+  }
+  if (ptfCountyPushed){
+    ptfCountyPushed = false;
+    selectCounty(null, { fly:true });
+  }
 });
 
 /* ============ PWA: SERVICE WORKER (offline resilience + installability) ============
