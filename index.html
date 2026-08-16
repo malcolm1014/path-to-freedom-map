@@ -859,32 +859,57 @@ nearBtn.onclick = () => {
 
 /* ============ LOCATION BANNER (soft-prompt over the Map tab, mobile only) ============
    Offers the same capability up front instead of waiting for someone to
-   find the small "Near me" control buried in the List tab. Shown once —
-   remembered via localStorage so it doesn't nag on repeat visits, with a
-   try/catch since some private-browsing modes throw on storage access. */
-const LB_DISMISSED_KEY = 'ptf_locBannerDismissed';
+   find the small "Near me" control buried in the List tab. Asks once,
+   then remembers the ACTUAL CHOICE (not just that it was dismissed) —
+   "yes" means every later visit silently re-locates and jumps straight
+   to that county with no re-prompt (the browser already remembers the
+   permission grant, so this is instant); "not now" means stay quiet and
+   never ask or auto-locate again. Previously both choices wrote the same
+   flag, which meant a "yes" was only ever honored once and then went
+   silent on every later visit — this key stores which choice it was. */
+const LB_CHOICE_KEY = 'ptf_locChoice';
 const locBannerEl = document.getElementById('locBanner');
+function getLocChoice(){
+  try { return localStorage.getItem(LB_CHOICE_KEY); } catch(e){ return null; }
+}
+function setLocChoice(choice){
+  try { localStorage.setItem(LB_CHOICE_KEY, choice); } catch(e){ /* private mode, etc — fine, just won't be remembered */ }
+}
 function hideLocBanner(){
   locBannerEl.classList.remove('visible');
-  try { localStorage.setItem(LB_DISMISSED_KEY, '1'); } catch(e){ /* private mode, etc — fine, just won't be remembered */ }
 }
 (function initLocBanner(){
   if (!isMobile() || !navigator.geolocation) return;
-  try { if (localStorage.getItem(LB_DISMISSED_KEY)) return; } catch(e){ /* fall through and show it */ }
+  const choice = getLocChoice();
+  if (choice === 'yes'){
+    navigator.geolocation.getCurrentPosition(
+      pos => activateNearMe(pos, { detectCounty:true, switchToList:true }),
+      () => { /* permission got revoked since last time — fail silently, manual Near Me still works */ },
+      { timeout: 10000 }
+    );
+    return;
+  }
+  if (choice === 'no') return;
   locBannerEl.classList.add('visible');
 })();
 document.getElementById('lbYes').addEventListener('click', () => {
   const btn = document.getElementById('lbYes');
   btn.textContent = "◎ Locating…";
   navigator.geolocation.getCurrentPosition(pos => {
+    setLocChoice('yes');
     hideLocBanner();
     activateNearMe(pos, { detectCounty:true, switchToList:true });
   }, () => {
     btn.textContent = "◎ Location blocked — try Near Me in the list";
     setTimeout(hideLocBanner, 3200);
+    // Don't remember "yes" for a request that just failed — ask again
+    // next visit instead of silently doing nothing forever.
   }, { timeout: 10000 });
 });
-document.getElementById('lbNo').addEventListener('click', hideLocBanner);
+document.getElementById('lbNo').addEventListener('click', () => {
+  setLocChoice('no');
+  hideLocBanner();
+});
 
 /* ============ SUPPLIES CHECKLIST ============ */
 const suppliesEl = document.getElementById('supplies');
