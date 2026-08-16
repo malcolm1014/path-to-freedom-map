@@ -104,6 +104,11 @@
   #credit-badge a:hover{ text-decoration:underline; }
   @media (max-width:760px){
     #credit-badge{ right:8px; bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px); top:auto; }
+    /* The List tab's own footer runs the full width right where this badge
+       floats — on a narrow phone the footer's attribution line wraps to
+       several rows and the fixed badge sits on top of it. Only show the
+       badge over the Map tab, where nothing else occupies that corner. */
+    body.mobile-list-active #credit-badge{ display:none; }
   }
 
   /* ============ FLOATING PANEL ============ */
@@ -362,6 +367,10 @@
     }
     body.mobile-list-active #panel{ display:flex; }
     header .sub{ display:none; }
+    /* Full-screen means the header now sits flush against the real top of
+       the viewport — on a notched phone that's the status bar / camera
+       cutout, so give it room instead of tucking the title underneath. */
+    header.pad{ padding-top:max(14px, env(safe-area-inset-top)); }
   }
 
   /* ============ LOCATION BANNER (soft-prompt, mobile only) ============
@@ -409,11 +418,19 @@
     .item{ padding:13px 18px; }
     .item .t{ font-size:.86rem; }
     .item .m{ font-size:.68rem; }
-    .chip{ padding:9px 14px 9px 11px; font-size:.78rem; }
+    /* 14 chips wrapped would push the search box and results several
+       screens down before anyone can even see them — scroll sideways
+       through one row instead of stacking them. */
+    .cats{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:thin; }
+    .chip{ padding:9px 14px 9px 11px; font-size:.78rem; flex:none; white-space:nowrap; }
     .chip .dot{ width:10px; height:10px; }
     #search{ padding:12px 12px 12px 34px; font-size:.88rem; }
     #nearme{ padding:9px 14px; font-size:.72rem; }
     .pin{ width:17px; height:17px; border-width:2.5px; }
+    /* Popups are opened with a fixed 340px maxWidth (see revealMarker/
+       bindPopup in the script below) sized for desktop — on a 320-375px
+       phone that overruns the screen edges. Cap it to the viewport. */
+    .leaflet-popup-content-wrapper, .leaflet-popup{ max-width:calc(100vw - 24px) !important; }
   }
   @media (prefers-reduced-motion: reduce){
     .pin, .chip, .item{ transition:none; }
@@ -1036,6 +1053,12 @@ function refreshJobsForCounty(){
 }
 
 selectCounty(null, { fly:false });
+
+/* On mobile the jobs panel starts with nothing to show ("Pick a county
+   above…") but was still expanded by default, pushing categories/search/
+   results further down a screen that's already short on room. Start it
+   collapsed there; desktop keeps it open since there's space to spare. */
+if (isMobile()) document.getElementById('jobsPanel').closest('details').removeAttribute('open');
 
 /* ============ PWA: SERVICE WORKER (offline resilience + installability) ============
    Lets the map be added to a home screen and keeps the app shell + any
