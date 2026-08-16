@@ -749,8 +749,9 @@ async function detectCountyFromLocation(loc){
     const body = await resp.json();
     const raw = (body && body.address && (body.address.county || body.address.state_district)) || "";
     const county = raw.replace(/\s+County$/i, "").trim();
-    if (county && ALL_FL_COUNTIES.includes(county) && county !== selectedCounty){
-      selectCounty(county, { fly:false }); // fly:false — already flying to the precise user location elsewhere
+    if (county && ALL_FL_COUNTIES.includes(county)){
+      try { localStorage.setItem(LB_COUNTY_KEY, county); } catch(e){ /* private mode, etc */ }
+      if (county !== selectedCounty) selectCounty(county, { fly:false }); // fly:false — already flying to the precise user location elsewhere
     }
   } catch(e){ /* offline/blocked/unexpected shape — fine, degrade silently */ }
 }
@@ -868,6 +869,7 @@ nearBtn.onclick = () => {
    flag, which meant a "yes" was only ever honored once and then went
    silent on every later visit — this key stores which choice it was. */
 const LB_CHOICE_KEY = 'ptf_locChoice';
+const LB_COUNTY_KEY = 'ptf_locCounty'; // last county detectCountyFromLocation actually matched
 const locBannerEl = document.getElementById('locBanner');
 function getLocChoice(){
   try { return localStorage.getItem(LB_CHOICE_KEY); } catch(e){ return null; }
@@ -882,9 +884,25 @@ function hideLocBanner(){
   if (!isMobile() || !navigator.geolocation) return;
   const choice = getLocChoice();
   if (choice === 'yes'){
+    /* Jump to the county straight away using the LAST KNOWN result
+       (instant, no permission prompt needed) rather than waiting on a
+       fresh geolocation call — several mobile browsers (notably iOS
+       Safari when location access isn't set to "Always Allow") require
+       a real tap to re-show the permission prompt and will just fail
+       silently on an automatic page-load call, which used to leave
+       people stuck on the statewide view with no visible sign anything
+       went wrong. A fresh live position is still fetched in the
+       background afterward, silently updating the pin/county for next
+       time if it succeeds — it just doesn't gate the initial jump. */
+    let savedCounty = null;
+    try { savedCounty = localStorage.getItem(LB_COUNTY_KEY); } catch(e){ /* private mode, etc */ }
+    if (savedCounty && ALL_FL_COUNTIES.includes(savedCounty)){
+      selectCounty(savedCounty, { fly:false });
+      setMobileView('list');
+    }
     navigator.geolocation.getCurrentPosition(
-      pos => activateNearMe(pos, { detectCounty:true, switchToList:true }),
-      () => { /* permission got revoked since last time — fail silently, manual Near Me still works */ },
+      pos => activateNearMe(pos, { detectCounty:true, switchToList:!savedCounty }),
+      () => { /* permission blocked this visit — fine, the saved county (if any) already got us there */ },
       { timeout: 10000 }
     );
     return;
