@@ -17,7 +17,7 @@
    - Everything else (Nominatim reverse-geocode, the CareerOneStop jobs
      API) is intentionally left alone — that data is meant to be live. */
 
-const CACHE_VERSION = 'ptf-v1';
+const CACHE_VERSION = 'ptf-v2';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const CDN_CACHE = `${CACHE_VERSION}-cdn`;
 const TILE_CACHE = `${CACHE_VERSION}-tiles`;
@@ -92,7 +92,13 @@ self.addEventListener('fetch', event => {
 
   if (url.origin === self.location.origin) {
     event.respondWith(
-      fetch(req).then(res => {
+      // cache: 'no-store' matters here — a plain fetch(req) can still be
+      // silently satisfied by the *browser's own HTTP cache* (a layer
+      // below the Cache API this service worker manages), which quietly
+      // defeats "network-first": data.js could keep serving the same
+      // stale disk-cached bytes indefinitely even though this code looks
+      // like it always prefers the network. This forces a real round trip.
+      fetch(req, { cache: 'no-store' }).then(res => {
         if (res.ok) caches.open(APP_SHELL_CACHE).then(cache => cache.put(req, res.clone()));
         return res;
       }).catch(() => caches.match(req))
