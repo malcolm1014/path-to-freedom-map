@@ -809,9 +809,28 @@ for (const [key, c] of Object.entries(CATEGORIES)){
   catsEl.appendChild(b);
 }
 
+/* Searching only ever touched the marker-cluster layer + list, never the
+   map's own pan/zoom — so if you'd zoomed into a county (or anywhere
+   tight) and then searched for something outside that view, every
+   matching pin was still "on the map" but outside the visible viewport,
+   which reads as "all the pinpoints are gone." Worst on mobile: flipping
+   from the List tab (where search lives) back to Map gives no live
+   feedback that you need to zoom out. Debounced so it settles once
+   typing pauses rather than yanking the view on every keystroke. */
+let searchFlyTimer = null;
+function flyToSearchResults(){
+  if (searchTerm === "") return; // clearing search shouldn't yank an intentional zoom/pan
+  const shown = markers.filter(m => visible(m._data));
+  if (!shown.length) return; // empty state is already communicated via #empty
+  const bounds = L.latLngBounds(shown.map(m => m.getLatLng()));
+  map.flyToBounds(bounds, { duration:.6, padding:[40,40], maxZoom:14 });
+}
+
 document.getElementById('search').addEventListener('input', e => {
   searchTerm = e.target.value.trim().toLowerCase();
   refresh();
+  clearTimeout(searchFlyTimer);
+  searchFlyTimer = setTimeout(flyToSearchResults, 350);
 });
 
 /* ============ MOBILE MAP/LIST TABS ============ */
