@@ -373,6 +373,27 @@
     header.pad{ padding-top:max(14px, env(safe-area-inset-top)); }
   }
 
+  /* ============ DATA LOAD ERROR (shown on every viewport, not just mobile —
+     a dropped connection can happen on desktop too) ============ */
+  #dataLoadError{
+    display:none; position:fixed; inset:0; z-index:2000;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(7,11,8,.72); backdrop-filter:blur(4px);
+  }
+  #dataLoadError.visible{ display:flex; }
+  #dataLoadError .dle-box{
+    max-width:360px; width:100%; text-align:center;
+    background:var(--glass); border:1px solid var(--line); border-radius:16px;
+    padding:24px 22px; box-shadow:0 16px 44px rgba(0,0,0,.5);
+  }
+  #dataLoadError .dle-title{ font-weight:700; font-size:1.02rem; margin-bottom:8px; color:var(--text); }
+  #dataLoadError p{ font-size:.85rem; line-height:1.5; color:var(--muted); margin-bottom:16px; }
+  #dataLoadError button{
+    font-family:var(--sans); font-size:.85rem; font-weight:700; cursor:pointer;
+    background:var(--accent); color:#07110a; border:1px solid var(--accent);
+    border-radius:10px; padding:11px 20px; width:100%;
+  }
+
   /* ============ LOCATION BANNER (soft-prompt, mobile only) ============
      Shown once over the Map tab on first visit (if geolocation exists and
      it hasn't already been dismissed/used) — offers to jump straight to
@@ -441,6 +462,20 @@
 <body>
 
 <div id="map"></div>
+
+<!-- Fallback for when data.js (880KB) fails to load — a dropped mobile
+     connection or a timeout leaves RESOURCES undefined, which used to
+     fail silently: the map/tiles above still render fine since they're
+     built before any data.js content is touched, but zero markers ever
+     get created and nothing on screen says why. This makes that failure
+     visible and actionable instead of just looking like an empty map. -->
+<div id="dataLoadError" role="alert">
+  <div class="dle-box">
+    <div class="dle-title">Couldn't load resource data</div>
+    <p>The page loaded, but the shelters/pantries/etc. data didn't — usually a dropped connection. Check your signal and try again.</p>
+    <button onclick="location.reload()">Reload</button>
+  </div>
+</div>
 
 <div id="credit-badge">Created Open Source by Savvy Security LLC @ <a href="https://www.facebook.com/savvyissecurity" target="_blank" rel="noopener">facebook.com/savvyissecurity</a></div>
 
@@ -520,6 +555,19 @@
 <!-- All 67 Florida county boundaries, simplified, for the statewide drill-down -->
 <script src="FL_COUNTY_GEO.js"></script>
 <script>
+/* data.js is a separate, plain <script src> tag loaded just above this one
+   (880KB — real weight on a mobile connection). If that request drops or
+   times out, RESOURCES/SUPPLIES/QUICK_REF are simply undefined here, and
+   without this guard the script would run until it hit the first line
+   that touches them (RESOURCES.map(...), well below where the map/tile
+   layer get created) and die there with an uncaught, invisible exception
+   — no map, no pins, no indication anything went wrong. Bail out early
+   with a visible, actionable message instead of a silent blank page. */
+if (typeof RESOURCES === 'undefined' || typeof SUPPLIES === 'undefined' || typeof QUICK_REF === 'undefined'){
+  document.getElementById('dataLoadError').classList.add('visible');
+  throw new Error('Path to Freedom: data.js failed to load — aborting init.');
+}
+
 /* Fixed display order — priority for this map (urgent needs first), not the
    underlying palette's own adjacency order; every dot always ships beside a
    text label (chip/list-row/popup tag), which is the documented mitigation
@@ -842,7 +890,21 @@ function setMobileView(view){
   tabMapBtn.setAttribute('aria-pressed', String(!isList));
   tabListBtn.setAttribute('aria-pressed', String(isList));
 }
-tabMapBtn.addEventListener('click', () => setMobileView('map'));
+/* Safety net for the general version of the same bug the search fix
+   above addresses: ANY time filtering changes what's shown without the
+   map's pan/zoom moving to match (a remembered county auto-selected on
+   load, category chips, etc.), switching to the Map tab is the moment
+   someone actually looks at the map and would see it empty. Only flies
+   when NONE of the currently-visible markers are already on screen, so a
+   normal tab switch with a reasonable view already in place is untouched. */
+function fitMapIfResultsOffscreen(){
+  const shown = markers.filter(m => visible(m._data));
+  if (!shown.length) return; // empty state is already communicated via #empty
+  const bounds = map.getBounds();
+  if (shown.some(m => bounds.contains(m.getLatLng()))) return;
+  map.flyToBounds(L.latLngBounds(shown.map(m => m.getLatLng())), { duration:.6, padding:[40,40], maxZoom:14 });
+}
+tabMapBtn.addEventListener('click', () => { setMobileView('map'); fitMapIfResultsOffscreen(); });
 tabListBtn.addEventListener('click', () => setMobileView('list'));
 
 /* Reveal a marker even if it's clustered (or filtered out) */
@@ -942,7 +1004,17 @@ function hideLocBanner(){
     let savedCounty = null;
     try { savedCounty = localStorage.getItem(LB_COUNTY_KEY); } catch(e){ /* private mode, etc */ }
     if (savedCounty && ALL_FL_COUNTIES.includes(savedCounty)){
-      selectCounty(savedCounty, { fly:false });
+      // fly:true (not false) — this used to skip repositioning the map,
+      // trusting the live geolocation call below to do it instead. But
+      // that call silently fails on plenty of mobile browsers (see the
+      // comment above), which left the map sitting at the statewide zoom
+      // while every pin outside this one county was filtered out — you'd
+      // switch to the Map tab and it would look completely empty. Flying
+      // here means the map is correct immediately; if the live call below
+      // does succeed, activateNearMe's flyTo just refines the view a bit
+      // further, which is a minor, expected settle rather than a jarring
+      // double-flight.
+      selectCounty(savedCounty, { fly:true });
       setMobileView('list');
     }
     navigator.geolocation.getCurrentPosition(
