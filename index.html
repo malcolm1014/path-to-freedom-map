@@ -208,6 +208,14 @@
   #nearme:hover{ color:var(--text); }
   #nearme[aria-pressed="true"]{ color:var(--accent); border-color:var(--accent); }
   #nearme:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  #printListBtn{
+    margin-top:8px; margin-left:6px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); background:var(--glass-2); border:1px solid var(--line);
+    border-radius:999px; padding:5px 12px; transition:color .15s ease, border-color .15s ease;
+  }
+  #printListBtn:hover{ color:var(--text); }
+  #printView{ display:none; }
   .you{
     width:14px; height:14px; border-radius:50%; background:var(--accent);
     border:2px solid rgba(234,242,235,.95);
@@ -479,6 +487,33 @@
     .pin, .chip, .item{ transition:none; }
     .you{ animation:none; }
   }
+
+  /* ============ PRINT VIEW ============
+     Native browser print (window.print(), triggered by #printListBtn),
+     NOT a canvas/PDF library — real selectable/accessible text, small
+     file size when someone picks "Save as PDF," and free (see the
+     printListBtn click handler below for the full rationale). Hides
+     literally everything except #printView, which printRenderList()
+     fills with plain name/address/phone/notes text for whatever's
+     currently filtered — the on-screen list only shows name+city+
+     category, not enough detail to be useful once printed. Relies on
+     default black-on-white text rather than this site's category
+     colors, which mean nothing on a B&W library printer. */
+  @media print{
+    body *{ visibility:hidden; }
+    #printView, #printView *{ visibility:visible; }
+    #printView{
+      display:block; position:absolute; left:0; top:0; width:100%;
+      color:#000; background:#fff; font-family:var(--sans);
+    }
+    #printView h1{ font-size:16pt; margin:0 0 2pt; }
+    #printView .pv-meta{ font-size:9pt; color:#333; margin:0 0 14pt; }
+    #printView .pv-item{ page-break-inside:avoid; margin:0 0 12pt; padding-bottom:10pt; border-bottom:1px solid #999; }
+    #printView .pv-name{ font-size:12pt; font-weight:700; margin:0 0 2pt; }
+    #printView .pv-cat{ font-size:9pt; color:#333; margin:0 0 4pt; }
+    #printView .pv-row{ font-size:10pt; margin:0 0 2pt; }
+    #printView .pv-url{ font-size:8.5pt; color:#333; word-break:break-all; }
+  }
 </style>
 </head>
 <body>
@@ -547,10 +582,12 @@
       <input id="search" type="search" placeholder="Search by name or city…" aria-label="Search resources">
     </div>
     <button id="nearme" aria-pressed="false" title="Sort the list by distance from your location">◎ Near me</button>
+    <button id="printListBtn" type="button" title="Print (or save as PDF) just the resources currently shown">🖨 Print this list</button>
   </div>
 
   <div id="list"></div>
   <div id="empty">No resources match. Clear the search or turn categories back on.</div>
+  <div id="printView"></div>
 
   </div><!-- /panelbody -->
 
@@ -1068,6 +1105,37 @@ nearBtn.onclick = () => {
     { timeout: 10000 }
   );
 };
+
+/* ============ PRINT VIEW ============
+   Builds a plain-text card per currently-VISIBLE (filtered) resource —
+   the on-screen #list rows only show name+city+category, not enough to
+   be useful once printed, so this pulls full address/phone/notes fresh
+   from RESOURCES rather than trying to reuse the compact row markup. */
+function printRenderList(){
+  const shown = markers.filter(m => visible(m._data)).map(m => m._data);
+  const printViewEl = document.getElementById('printView');
+  const scopeLabel = selectedCounty ? `${selectedCounty} County` : "All Florida";
+  const cards = shown.map(r => {
+    const rows = [];
+    if (r.address) rows.push(`<div class="pv-row">${esc(r.address)}</div>`);
+    if (r.phone) rows.push(`<div class="pv-row">${esc(r.phone)}</div>`);
+    if (r.idRequired) rows.push(`<div class="pv-row">${esc(r.idRequired)}</div>`);
+    if (r.notes) rows.push(`<div class="pv-row">${esc(r.notes)}</div>`);
+    if (r.url) rows.push(`<div class="pv-url">${esc(r.url)}</div>`);
+    return `<div class="pv-item">
+              <div class="pv-name">${esc(r.name)}</div>
+              <div class="pv-cat">${esc(CATEGORIES[r.category].label)}</div>
+              ${rows.join("")}
+            </div>`;
+  }).join("");
+  printViewEl.innerHTML = `<h1>Path to Freedom — ${esc(scopeLabel)}</h1>
+    <div class="pv-meta">${shown.length} resources · printed ${new Date().toLocaleDateString()} · verify hours/services before visiting · in immediate danger, call 911</div>
+    ${cards}`;
+}
+document.getElementById('printListBtn').addEventListener('click', () => {
+  printRenderList();
+  window.print();
+});
 
 /* ============ LOCATION BANNER (soft-prompt over the Map tab, mobile only) ============
    Offers the same capability up front instead of waiting for someone to
