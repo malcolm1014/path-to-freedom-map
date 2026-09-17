@@ -1919,6 +1919,7 @@ const QUICK_REF = {
   statewide: [
     { need:"Emergency", num:"911", tel:"911" },
     { need:"General — where do I start?", num:"Dial 211", tel:"211" },
+    { need:"Prefer text? Same 211 network", num:"Text 898211", href:"sms:898211" },
     { need:"Suicide & crisis (24hr, national)", num:"988", tel:"988" },
     { need:"Domestic violence (24hr, national)", num:"1-800-799-7233", tel:"18007997233" }
   ],

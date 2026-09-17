@@ -729,11 +729,56 @@ const markers = RESOURCES.map(r => {
 const enabledCats = new Set(Object.keys(CATEGORIES));
 let searchTerm = "";
 let selectedCounty = null; // null = All Florida
+/* Snapshot the page's original query string before anything (the
+   baseline selectCounty(null) call, the remembered-county banner, etc.)
+   has a chance to overwrite it via syncUrlState()'s replaceState calls —
+   readUrlState() below applies from this frozen copy, not a live re-read
+   of location.search, specifically so it survives those earlier calls. */
+const initialUrlParams = new URLSearchParams(location.search);
 
 function visible(r){
   return enabledCats.has(r.category)
     && (!selectedCounty || r.county === selectedCounty)
     && (searchTerm === "" || (r.name + " " + r.city).toLowerCase().includes(searchTerm));
+}
+
+/* Bookmarkable/shareable filter state — the county/category/search
+   choices are reflected in the URL's query string via replaceState
+   (never pushState, deliberately: this must not add its own entries to
+   the mobile back-button history stack the popup/county levels already
+   manage a few hundred lines down — a plain URL-bar update doesn't need
+   a "back" step of its own). Read once on load so a shared link (e.g.
+   "?county=Hernando&cats=-jobs,-workspace" texted to a friend) opens
+   already filtered the same way. `cats` lists DISABLED categories, not
+   enabled ones, so an old shared link still shows any category added to
+   the site later (which defaults to enabled) instead of silently hiding it. */
+function syncUrlState(){
+  const p = new URLSearchParams();
+  if (selectedCounty) p.set('county', selectedCounty);
+  const disabled = Object.keys(CATEGORIES).filter(k => !enabledCats.has(k));
+  if (disabled.length) p.set('cats', disabled.map(k => '-' + k).join(','));
+  if (searchTerm) p.set('q', searchTerm);
+  const qs = p.toString();
+  history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+}
+
+function readUrlState(){
+  const p = initialUrlParams;
+  const county = p.get('county');
+  if (county && ALL_FL_COUNTIES.includes(county)) selectCounty(county, { fly:true });
+  const catsParam = p.get('cats');
+  if (catsParam){
+    for (const tok of catsParam.split(',')){
+      if (tok.startsWith('-') && enabledCats.has(tok.slice(1))) enabledCats.delete(tok.slice(1));
+    }
+    for (const chip of catsEl.children) chip.setAttribute('aria-pressed', String(enabledCats.has(chip.dataset.cat)));
+  }
+  const q = p.get('q');
+  if (q){
+    searchTerm = q.toLowerCase();
+    document.getElementById('search').value = q;
+  }
+  if (county || catsParam || q){ refresh(); syncUrlState(); }
 }
 
 function refresh(){
@@ -826,6 +871,7 @@ function selectCounty(name, opts){
   renderQuickRef();
   refreshJobsForCounty();
   refresh();
+  syncUrlState();
 }
 
 /* Best-effort reverse geocode (Nominatim, no API key) from a lat/lng to
@@ -854,7 +900,7 @@ function renderQuickRef(){
   const rows = (QUICK_REF.statewide || [])
     .concat(selectedCounty ? (QUICK_REF[selectedCounty] || []) : []);
   el.innerHTML = rows.map(r =>
-    `<a href="tel:${esc(r.tel)}"><span class="need">${esc(r.need)}</span><span class="num">${esc(r.num)}</span></a>`
+    `<a href="${esc(r.href || `tel:${r.tel}`)}"><span class="need">${esc(r.need)}</span><span class="num">${esc(r.num)}</span></a>`
   ).join("");
 }
 
@@ -863,6 +909,7 @@ const catsEl = document.getElementById('cats');
 for (const [key, c] of Object.entries(CATEGORIES)){
   const b = document.createElement('button');
   b.className = 'chip';
+  b.dataset.cat = key;
   b.setAttribute('aria-pressed', 'true');
   b.style.setProperty('--cc', c.color);
   b.innerHTML = `<span class="dot"></span>${c.label}`;
@@ -871,6 +918,7 @@ for (const [key, c] of Object.entries(CATEGORIES)){
     b.setAttribute('aria-pressed', String(!on));
     on ? enabledCats.delete(key) : enabledCats.add(key);
     refresh();
+    syncUrlState();
   };
   catsEl.appendChild(b);
 }
@@ -895,6 +943,7 @@ function flyToSearchResults(){
 document.getElementById('search').addEventListener('input', e => {
   searchTerm = e.target.value.trim().toLowerCase();
   refresh();
+  syncUrlState();
   clearTimeout(searchFlyTimer);
   searchFlyTimer = setTimeout(flyToSearchResults, 350);
 });
@@ -1174,6 +1223,7 @@ function refreshJobsForCounty(){
 }
 
 selectCounty(null, { fly:false });
+readUrlState();
 
 /* On mobile the jobs panel starts with nothing to show ("Pick a county
    above…") but was still expanded by default, pushing categories/search/
