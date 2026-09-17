@@ -529,7 +529,7 @@
 
   </div><!-- /panelbody -->
 
-  <footer>data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · © OpenStreetMap · CARTO</footer>
+  <footer>data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors</footer>
 </aside>
 
 <!-- Mobile-only bottom nav: map stays full-bleed under the List tab's
@@ -603,11 +603,27 @@ function milesTo(a, b){
 const map = L.map('map', { zoomControl:false }).setView([27.9, -81.5], 7);
 L.control.zoom({ position:'topright' }).addTo(map);
 
-/* "Streets" basemap only — full street-name and address-level labeling,
-   so the map is actually navigable at building level. No dark-mode
-   option; CARTO Voyager, same CDN as before, no API key. */
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20
+/* Muted "light gray canvas" basemap, no dark-mode option. Switched
+   2026-09-17 from CARTO Voyager: CARTO's basemaps.cartocdn.com now
+   requires a registered API key and was rendering every tile with a
+   diagonal "API KEY REQUIRED" watermark for unauthenticated requests.
+   Plain OSM raster tiles (tile.openstreetmap.org) are a free/keyless
+   fallback but OSM's own usage policy discourages third-party
+   production hotlinking at any real volume and actively 403s traffic
+   it flags — a real risk for a public site, confirmed by hitting that
+   block during testing. Esri's legacy "Canvas/World_Light_Gray_*"
+   endpoints are built for exactly this (low-volume public-good maps),
+   still don't require an API key, and are visually much closer to the
+   original CARTO Voyager look (muted, city labels, no clutter) than
+   plain OSM tiles. Two stacked layers: a base (fills/roads, no text)
+   plus a reference overlay (labels only) — same combo the tile CDN
+   itself uses internally, added as two `L.tileLayer` calls rather than
+   one so the label layer paints above the county boundaries below. */
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom:20, maxNativeZoom:16
+}).addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom:20, maxNativeZoom:16, pane:'shadowPane'
 }).addTo(map);
 
 /* All 67 FL counties, thin/muted — the statewide context layer. Counties

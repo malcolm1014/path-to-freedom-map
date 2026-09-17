@@ -11,13 +11,13 @@
    - Pinned-version CDN libraries (Leaflet, markercluster, Google Fonts):
      cache-first. Safe because these URLs are version-locked and never
      change under us, so there's nothing to go stale.
-   - CARTO map tiles: cache-first with a capped, self-trimming cache, so an
+   - Esri basemap tiles: cache-first with a capped, self-trimming cache, so an
      area someone has already viewed keeps rendering offline without the
      tile cache growing forever on a low-storage phone.
    - Everything else (Nominatim reverse-geocode, the CareerOneStop jobs
      API) is intentionally left alone — that data is meant to be live. */
 
-const CACHE_VERSION = 'ptf-v2';
+const CACHE_VERSION = 'ptf-v3';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const CDN_CACHE = `${CACHE_VERSION}-cdn`;
 const TILE_CACHE = `${CACHE_VERSION}-tiles`;
@@ -66,7 +66,7 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  if (url.hostname.endsWith('basemaps.cartocdn.com')) {
+  if (url.hostname.endsWith('server.arcgisonline.com')) {
     event.respondWith(
       caches.open(TILE_CACHE).then(cache =>
         cache.match(req).then(cached => fetch(req).then(res => {
