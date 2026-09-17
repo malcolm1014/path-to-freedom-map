@@ -343,6 +343,8 @@
   .popup .ev b{ color:var(--text); font-weight:500; }
   .popup .ev span{ display:block; color:var(--muted); font-family:var(--mono); font-size:.66rem; margin-top:1px; }
   .popup .verified{ font-family:var(--mono); font-size:.6rem; color:var(--accent); margin-top:2px; }
+  .popup .correction-link{ display:block; font-size:.62rem; color:var(--muted); margin-top:8px; text-decoration:none; }
+  .popup .correction-link:hover{ color:var(--text); text-decoration:underline; }
 
   /* ============ PINS ============ */
   .pin{
@@ -784,6 +786,17 @@ const markers = RESOURCES.map(r => {
   const evHtml = (r.events && r.events.length)
     ? `<div class="events">${r.events.map(e => `<div class="ev"><b>${esc(e.title)}</b><span>${esc(e.when || "")}</span></div>`).join("")}</div>`
     : "";
+  /* "Report a correction" link — GitHub's own prefilled-issue-URL
+     technique (title/body/label as query params on /issues/new), so a
+     maintainer gets full context immediately instead of a vague "some
+     entry is wrong" message. Filing does need a GitHub account, which
+     isn't everyone — a lower-barrier path (a form, an email address)
+     would need the project owner's own account to receive it, so this
+     is the one channel that doesn't require inventing a contact that
+     might not actually be checked. */
+  const correctionTitle = `Correction: ${r.name} (${r.county} County)`;
+  const correctionBody = `What's wrong with this listing, and what should it say instead?\n\n\n---\nCurrent data on the map:\nName: ${r.name}\nAddress: ${r.address || "(none listed)"}\nPhone: ${r.phone || "(none listed)"}\nURL: ${r.url || "(none listed)"}`;
+  const correctionUrl = `https://github.com/malcolm1014/path-to-freedom-map/issues/new?${new URLSearchParams({ title: correctionTitle, body: correctionBody, labels: "correction" }).toString()}`;
   m.bindPopup(`
     <div class="popup">
       <h3>${esc(r.name)}</h3>
@@ -794,6 +807,7 @@ const markers = RESOURCES.map(r => {
       ${evHtml}
       ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">Website ↗</a>` : ""}
       ${r.verified ? `<div class="verified">independently verified ${esc(r.verified)}</div>` : ""}
+      <a class="correction-link" href="${esc(correctionUrl)}" target="_blank" rel="noopener">See something wrong here? Report it ↗</a>
     </div>`, { maxWidth: 340 });
   m._data = r;
   return m;
