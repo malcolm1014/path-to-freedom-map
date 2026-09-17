@@ -298,6 +298,16 @@
     font-family:var(--mono); font-size:.58rem; letter-spacing:.03em;
     color:var(--muted); padding:11px 18px; border-top:1px solid var(--line); line-height:1.6;
   }
+  header.pad{ position:relative; }
+  #langToggle{
+    position:absolute; top:11px; right:14px; display:flex; gap:2px;
+    background:var(--glass-2); border:1px solid var(--line); border-radius:7px; padding:2px;
+  }
+  #langToggle button{
+    background:none; border:none; color:var(--muted); font-family:var(--mono); font-size:.66rem;
+    font-weight:700; letter-spacing:.04em; padding:4px 8px; border-radius:5px; cursor:pointer;
+  }
+  #langToggle button[aria-pressed="true"]{ background:var(--accent); color:#07110a; }
   /* Quick Exit: plain wording (not "Quick Exit" itself — usability
      research this project drew on found that phrase tests poorly,
      people don't reliably understand it), deliberately not styled as an
@@ -564,64 +574,68 @@
 </div>
 
 <div id="credit-badge">Created Open Source by Savvy Security LLC @ <a href="https://www.facebook.com/savvyissecurity" target="_blank" rel="noopener">facebook.com/savvyissecurity</a></div>
-<button id="quickExitFloat" type="button" title="Instantly leaves this site — press twice, or press Escape twice">Leave site ×2</button>
+<button id="quickExitFloat" type="button" data-i18n="qe.leaveFloat" data-i18n-title="qe.title" title="Instantly leaves this site — press twice, or press Escape twice">Leave site ×2</button>
 
 <aside id="panel">
   <header class="pad hairline">
-    <button id="quickExitBtn" type="button" title="Instantly leaves this site — press twice, or press Escape twice">Leave this site now ×2</button>
-    <p class="qe-note">Doesn't clear your browser history or stop other monitoring on this device — press Ctrl/Cmd+H to review or clear real history separately.</p>
+    <div id="langToggle" role="group" aria-label="Language / Idioma">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false">ES</button>
+    </div>
+    <button id="quickExitBtn" type="button" data-i18n="qe.leaveBtn" data-i18n-title="qe.title" title="Instantly leaves this site — press twice, or press Escape twice">Leave this site now ×2</button>
+    <p class="qe-note" data-i18n="qe.note">Doesn't clear your browser history or stop other monitoring on this device — press Ctrl/Cmd+H to review or clear real history separately.</p>
     <h1><span class="mark">◆</span>Path to Freedom</h1>
-    <p class="sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
-    <div class="status"><b id="visCount"></b> RESOURCES SHOWN <span id="countyCoverage" style="opacity:.7"></span></div>
+    <p class="sub" data-i18n="site.sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
+    <div class="status"><b id="visCount"></b> <span data-i18n="site.resourcesShown">RESOURCES SHOWN</span> <span id="countyCoverage" style="opacity:.7"></span></div>
   </header>
 
   <div id="panelbody">
 
   <div class="pad hairline">
-    <div class="label">County</div>
+    <div class="label" data-i18n="label.county">County</div>
     <div class="searchwrap" style="margin-bottom:0;">
       <select id="countySel" style="width:100%; padding:9px 12px; border-radius:10px; background:var(--glass-2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-size:.82rem;"></select>
     </div>
   </div>
 
   <div class="pad hairline">
-    <div class="label">If you need help right now</div>
+    <div class="label" data-i18n="label.helpNow">If you need help right now</div>
     <div class="qref" id="qref"></div>
-    <p class="safety"><b>In immediate danger? Call 911.</b> Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Where a shelter's location is intentionally not published for resident safety (see its notes), call its hotline — don't try to find the building.</p>
+    <p class="safety"><b data-i18n="safety.danger911">In immediate danger? Call 911.</b> <span data-i18n="safety.rest">Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Where a shelter's location is intentionally not published for resident safety (see its notes), call its hotline — don't try to find the building.</span></p>
   </div>
 
   <details class="pad hairline supplies-wrap">
-    <summary class="label" style="cursor:pointer; margin-bottom:0;">Essential supplies checklist ▾</summary>
+    <summary class="label" style="cursor:pointer; margin-bottom:0;" data-i18n="label.supplies">Essential supplies checklist ▾</summary>
     <div id="supplies" style="margin-top:10px"></div>
   </details>
 
   <details class="pad hairline supplies-wrap" open>
-    <summary class="label" style="cursor:pointer; margin-bottom:0;">Job search <span id="jobsCountyLabel"></span> ▾</summary>
+    <summary class="label" style="cursor:pointer; margin-bottom:0;"><span data-i18n="label.jobs">Job search</span> <span id="jobsCountyLabel"></span> ▾</summary>
     <div id="jobsPanel" style="margin-top:10px"></div>
-    <div class="jobs-attribution">Job search via <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, sponsored by the U.S. Dept. of Labor.</div>
+    <div class="jobs-attribution" data-i18n-html="jobs.attribution">Job search via <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, sponsored by the U.S. Dept. of Labor.</div>
   </details>
 
   <div class="pad hairline">
-    <div class="label">Categories</div>
+    <div class="label" data-i18n="label.categories">Categories</div>
     <div class="cats" id="cats"></div>
   </div>
 
   <div class="pad hairline">
     <div class="searchwrap">
-      <input id="search" type="search" placeholder="Search by name or city…" aria-label="Search resources">
+      <input id="search" type="search" data-i18n-placeholder="search.placeholder" placeholder="Search by name or city…" aria-label="Search resources">
     </div>
-    <button id="nearme" aria-pressed="false" title="Sort the list by distance from your location">◎ Near me</button>
-    <button id="printListBtn" type="button" title="Print (or save as PDF) just the resources currently shown">🖨 Print this list</button>
+    <button id="nearme" aria-pressed="false" data-i18n="nearme.off" data-i18n-title="nearme.title" title="Sort the list by distance from your location">◎ Near me</button>
+    <button id="printListBtn" type="button" data-i18n="print.btn" data-i18n-title="print.title" title="Print (or save as PDF) just the resources currently shown">🖨 Print this list</button>
   </div>
 
   <div id="list"></div>
-  <div id="empty">No resources match. Clear the search or turn categories back on.</div>
+  <div id="empty" data-i18n="list.empty">No resources match. Clear the search or turn categories back on.</div>
   <div id="printView"></div>
 
   </div><!-- /panelbody -->
 
-  <button id="clearDataBtn" type="button">On a library or shared computer? Clear my saved county/location ↻</button>
-  <footer>data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors</footer>
+  <button id="clearDataBtn" type="button" data-i18n="clear.btn">On a library or shared computer? Clear my saved county/location ↻</button>
+  <footer data-i18n-html="footer.text">data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors</footer>
 </aside>
 
 <!-- Mobile-only bottom nav: map stays full-bleed under the List tab's
@@ -633,10 +647,10 @@
 </nav>
 
 <div id="locBanner" role="region" aria-label="Use your location">
-  <div class="lb-text">Find shelters, food, and help closest to you right now?</div>
+  <div class="lb-text" data-i18n="lb.text">Find shelters, food, and help closest to you right now?</div>
   <div class="lb-actions">
-    <button id="lbYes" class="lb-primary">◎ Use my location</button>
-    <button id="lbNo" class="lb-dismiss">Not now</button>
+    <button id="lbYes" class="lb-primary" data-i18n="lb.yes">◎ Use my location</button>
+    <button id="lbNo" class="lb-dismiss" data-i18n="lb.no">Not now</button>
   </div>
 </div>
 
@@ -669,6 +683,138 @@ if (typeof RESOURCES === 'undefined' || typeof SUPPLIES === 'undefined' || typeo
   document.getElementById('dataLoadError').classList.add('visible');
   throw new Error('Path to Freedom: data.js failed to load — aborting init.');
 }
+
+/* ============ I18N (English / Spanish UI toggle) ============
+   Scope, deliberately narrow: translates the site's own UI CHROME
+   (buttons, labels, category/service names) — NOT the 1,600 resource
+   `notes`/`address`/`hours` fields in data.js. Machine-translating
+   those would risk exactly the kind of error (a wrong day, a mangled
+   "not") that this project's whole data-integrity discipline
+   (geocoding honesty, no-guessing-a-number rule) exists to prevent —
+   a bad MT error in an address or a set of hours could send someone to
+   a closed building. A future pass could hand-translate specific
+   high-traffic entries, but that's a data project, not a UI one.
+   Static HTML elements carry the string to translate: data-i18n sets
+   textContent, data-i18n-html sets innerHTML (for the couple of
+   strings that embed a real link), data-i18n-title/-placeholder set
+   those attributes. Persisted in the same `ptf_`-prefixed localStorage
+   key convention as the rest of the site (covered by the "Clear my
+   data" button too). */
+const I18N = {
+  en: {
+    'qe.leaveFloat': "Leave site ×2", 'qe.leaveBtn': "Leave this site now ×2",
+    'qe.title': "Instantly leaves this site — press twice, or press Escape twice",
+    'qe.note': "Doesn't clear your browser history or stop other monitoring on this device — press Ctrl/Cmd+H to review or clear real history separately.",
+    'qe.armed': "Tap again to leave now", 'qe.armedFloat': "Tap again",
+    'site.sub': "Homelessness & poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.",
+    'site.resourcesShown': "RESOURCES SHOWN",
+    'label.county': "County", 'label.helpNow': "If you need help right now",
+    'safety.danger911': "In immediate danger? Call 911.",
+    'safety.rest': "Everything on this map is free or low-barrier, but hours, food supply, and voucher availability change often — call ahead before a special trip. Where a shelter's location is intentionally not published for resident safety (see its notes), call its hotline — don't try to find the building.",
+    'label.supplies': "Essential supplies checklist ▾", 'label.jobs': "Job search",
+    'jobs.attribution': 'Job search via <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, sponsored by the U.S. Dept. of Labor.',
+    'jobs.pickCounty': "Pick a county above to search local jobs.",
+    'jobs.searchNear': "Search current jobs near",
+    'label.categories': "Categories", 'search.placeholder': "Search by name or city…",
+    'nearme.title': "Sort the list by distance from your location",
+    'nearme.off': "◎ Near me", 'nearme.on': "◎ Near me — on", 'nearme.locating': "◎ locating…",
+    'nearme.blocked': "◎ location blocked", 'nearme.unavailable': "◎ location unavailable",
+    'print.btn': "🖨 Print this list", 'print.title': "Print (or save as PDF) just the resources currently shown",
+    'print.meta': "resources · printed", 'print.metaTail': "verify hours/services before visiting · in immediate danger, call 911",
+    'list.empty': "No resources match. Clear the search or turn categories back on.",
+    'clear.btn': "On a library or shared computer? Clear my saved county/location ↻",
+    'footer.text': "data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors",
+    'lb.text': "Find shelters, food, and help closest to you right now?",
+    'lb.yes': "◎ Use my location", 'lb.no': "Not now",
+    'popup.website': "Website ↗", 'popup.verified': "independently verified",
+    'popup.report': "See something wrong here? Report it ↗",
+    'lb.locating': "◎ Locating…", 'lb.blocked': "◎ Location blocked — try Near Me in the list",
+  },
+  es: {
+    'qe.leaveFloat': "Salir ×2", 'qe.leaveBtn': "Salir de este sitio ×2",
+    'qe.title': "Sale de este sitio al instante — presiona dos veces, o presiona Escape dos veces",
+    'qe.note': "No borra el historial de tu navegador ni detiene otro tipo de monitoreo en este dispositivo — presiona Ctrl/Cmd+H para revisar o borrar el historial real por separado.",
+    'qe.armed': "Toca de nuevo para salir", 'qe.armedFloat': "Toca de nuevo",
+    'site.sub': "Recursos para personas sin hogar y en situación de pobreza en toda Florida — despensas, refugios, ropa, transporte, y las agencias que los conectan. Creciendo condado por condado; elige el tuyo abajo.",
+    'site.resourcesShown': "RECURSOS MOSTRADOS",
+    'label.county': "Condado", 'label.helpNow': "Si necesitas ayuda ahora mismo",
+    'safety.danger911': "¿Peligro inmediato? Llama al 911.",
+    'safety.rest': "Todo en este mapa es gratuito o de bajo costo, pero los horarios, la disponibilidad de alimentos y los vales cambian con frecuencia — llama antes de hacer un viaje especial. Cuando la ubicación de un refugio no se publica intencionalmente por la seguridad de los residentes (ver sus notas), llama a su línea directa — no intentes encontrar el edificio.",
+    'label.supplies': "Lista de suministros esenciales ▾", 'label.jobs': "Búsqueda de empleo",
+    'jobs.attribution': 'Búsqueda de empleo a través de <a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop</a>, patrocinado por el Departamento de Trabajo de EE. UU.',
+    'jobs.pickCounty': "Elige un condado arriba para buscar empleos locales.",
+    'jobs.searchNear': "Buscar empleos actuales cerca de",
+    'label.categories': "Categorías", 'search.placeholder': "Buscar por nombre o ciudad…",
+    'nearme.title': "Ordenar la lista por distancia desde tu ubicación",
+    'nearme.off': "◎ Cerca de mí", 'nearme.on': "◎ Cerca de mí — activado", 'nearme.locating': "◎ localizando…",
+    'nearme.blocked': "◎ ubicación bloqueada", 'nearme.unavailable': "◎ ubicación no disponible",
+    'print.btn': "🖨 Imprimir esta lista", 'print.title': "Imprimir (o guardar como PDF) solo los recursos mostrados actualmente",
+    'print.meta': "recursos · impreso", 'print.metaTail': "verifica horarios/servicios antes de visitar · en peligro inmediato, llama al 911",
+    'list.empty': "Ningún recurso coincide. Borra la búsqueda o vuelve a activar las categorías.",
+    'clear.btn': "¿En una computadora de biblioteca o compartida? Borrar mi condado/ubicación guardados ↻",
+    'footer.text': "revisión de datos ago 2026 · verifica horarios/servicios antes de visitar · sin afiliación con ninguna organización mencionada · mapa base © Esri, HERE, Garmin, © OpenStreetMap contributors",
+    'lb.text': "¿Buscar refugios, comida y ayuda más cercanos a ti ahora?",
+    'lb.yes': "◎ Usar mi ubicación", 'lb.no': "Ahora no",
+    'popup.website': "Sitio web ↗", 'popup.verified': "verificado de forma independiente",
+    'popup.report': "¿Ves algo incorrecto aquí? Repórtalo ↗",
+    'lb.locating': "◎ Localizando…", 'lb.blocked': "◎ Ubicación bloqueada — prueba \"Cerca de mí\" en la lista",
+  }
+};
+const CATEGORY_LABELS_ES = {
+  shelter:"Refugio (camas nocturnas)", food:"Despensas y comidas", hub:"Centros de servicios múltiples",
+  medical:"Clínicas y centros de salud", mentalhealth:"Salud mental y conductual",
+  clothing:"Ropa y vales de tiendas de segunda mano", hygiene:"Duchas (gimnasios)",
+  workspace:"Computadoras gratuitas y espacio de trabajo", jobs:"Centros de empleo",
+  benefits:"Oficinas de beneficios gubernamentales", transportation:"Transporte",
+  pet:"Despensas de alimento para mascotas", camping:"Acampada pública legal",
+  coalition:"Agencias coordinadoras", hotline:"Líneas directas y de crisis"
+};
+const SVC_LABELS_ES = {
+  food:"comida", shelter:"refugio", medical:"médico", clothing:"ropa",
+  financial:"ayuda financiera", transportation:"transporte", petfood:"alimento para mascotas",
+  snap:"ayuda SNAP", veterans:"veteranos", seniors:"personas mayores", children:"niños",
+  casework:"trabajo social", legal:"legal", dv:"violencia doméstica", housing:"vivienda",
+  energy:"ayuda con servicios públicos", headstart:"Head Start", mentalhealth:"salud mental",
+  workspace:"espacio de trabajo", showers:"duchas"
+};
+const QUICK_REF_NEED_ES = {
+  "Emergency": "Emergencia",
+  "General — where do I start?": "General — ¿por dónde empiezo?",
+  "Prefer text? Same 211 network": "¿Prefieres texto? Misma red 211",
+  "Suicide & crisis (24hr, national)": "Suicidio y crisis (24hr, nacional)",
+  "Domestic violence (24hr, national)": "Violencia doméstica (24hr, nacional)"
+};
+let currentLang = 'en';
+try { currentLang = localStorage.getItem('ptf_lang') || 'en'; } catch(e) { /* private mode, etc */ }
+function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
+function applyI18n(){
+  document.documentElement.lang = currentLang;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
+  for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = t(el.dataset.i18nPlaceholder);
+  for (const btn of document.querySelectorAll('#langToggle button')) btn.setAttribute('aria-pressed', String(btn.dataset.lang === currentLang));
+}
+function setLang(lang){
+  currentLang = lang;
+  try { localStorage.setItem('ptf_lang', lang); } catch(e) { /* private mode, etc */ }
+  applyI18n();
+  // Category chips, popups, the quick-ref strip, and job-search status all
+  // embed translated label text baked in at render time — cheaper to just
+  // rebuild them than to thread live-language-awareness through every one.
+  rebuildCategoryChips();
+  for (const m of markers) m.setPopupContent(buildPopupHtml(m._data));
+  refresh();
+  renderQuickRef();
+  refreshJobsForCounty();
+}
+document.getElementById('langToggle').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if (btn) setLang(btn.dataset.lang);
+});
+function catLabel(key){ return currentLang === 'es' && CATEGORY_LABELS_ES[key] ? CATEGORY_LABELS_ES[key] : CATEGORIES[key].label; }
+function svcLabel(key){ return currentLang === 'es' && SVC_LABELS_ES[key] ? SVC_LABELS_ES[key] : (SVC_LABELS[key] || key); }
+function needLabel(need){ return currentLang === 'es' && QUICK_REF_NEED_ES[need] ? QUICK_REF_NEED_ES[need] : need; }
 
 /* Fixed display order — priority for this map (urgent needs first), not the
    underlying palette's own adjacency order; every dot always ships beside a
@@ -798,9 +944,14 @@ const SVC_LABELS = {
   energy:"utility aid", headstart:"Head Start", mentalhealth:"mental health",
   workspace:"workspace", showers:"showers"
 };
-const markers = RESOURCES.map(r => {
+/* Popup HTML is language-dependent (category/service labels), so it's
+   built through this function rather than baked into m.bindPopup() as a
+   one-time string — setLang() calls it again for every marker via
+   m.setPopupContent() to keep already-created popups in sync instead of
+   leaving them stuck in whatever language was active when the page
+   loaded. */
+function buildPopupHtml(r){
   const cat = CATEGORIES[r.category];
-  const m = L.marker([r.lat, r.lng], { icon:makeIcon(cat.color) });
   const facts = [];
   if (r.address) facts.push(`<div class="fact"><span class="fk">LOC</span><span>${esc(r.address)}</span></div>`);
   if (r.phone)   facts.push(`<div class="fact"><span class="fk">TEL</span><a href="tel:${esc(String(r.phone).replace(/[^+\d]/g,'').slice(0,15))}">${esc(r.phone)}</a></div>`);
@@ -808,7 +959,7 @@ const markers = RESOURCES.map(r => {
   if (r.when)    facts.push(`<div class="fact"><span class="fk">TIME</span><span>${esc(r.when)}</span></div>`);
   if (r.idRequired) facts.push(`<div class="fact"><span class="fk">ID</span><span>${esc(r.idRequired)}</span></div>`);
   const svcHtml = (r.services && r.services.length)
-    ? r.services.map(s => `<span class="svc">${esc(SVC_LABELS[s] || s)}</span>`).join("")
+    ? r.services.map(s => `<span class="svc">${esc(svcLabel(s))}</span>`).join("")
     : "";
   const evHtml = (r.events && r.events.length)
     ? `<div class="events">${r.events.map(e => `<div class="ev"><b>${esc(e.title)}</b><span>${esc(e.when || "")}</span></div>`).join("")}</div>`
@@ -824,18 +975,23 @@ const markers = RESOURCES.map(r => {
   const correctionTitle = `Correction: ${r.name} (${r.county} County)`;
   const correctionBody = `What's wrong with this listing, and what should it say instead?\n\n\n---\nCurrent data on the map:\nName: ${r.name}\nAddress: ${r.address || "(none listed)"}\nPhone: ${r.phone || "(none listed)"}\nURL: ${r.url || "(none listed)"}`;
   const correctionUrl = `https://github.com/malcolm1014/path-to-freedom-map/issues/new?${new URLSearchParams({ title: correctionTitle, body: correctionBody, labels: "correction" }).toString()}`;
-  m.bindPopup(`
+  return `
     <div class="popup">
       <h3>${esc(r.name)}</h3>
-      <span class="tag" style="color:${cat.color}; border-color:${cat.color}">${cat.label}</span>
+      <span class="tag" style="color:${cat.color}; border-color:${cat.color}">${esc(catLabel(r.category))}</span>
       ${svcHtml}
       <p>${esc(r.notes || "")}</p>
       ${facts.length ? `<div class="facts">${facts.join("")}</div>` : ""}
       ${evHtml}
-      ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">Website ↗</a>` : ""}
-      ${r.verified ? `<div class="verified">independently verified ${esc(r.verified)}</div>` : ""}
-      <a class="correction-link" href="${esc(correctionUrl)}" target="_blank" rel="noopener">See something wrong here? Report it ↗</a>
-    </div>`, { maxWidth: 340 });
+      ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(t('popup.website'))}</a>` : ""}
+      ${r.verified ? `<div class="verified">${esc(t('popup.verified'))} ${esc(r.verified)}</div>` : ""}
+      <a class="correction-link" href="${esc(correctionUrl)}" target="_blank" rel="noopener">${esc(t('popup.report'))}</a>
+    </div>`;
+}
+const markers = RESOURCES.map(r => {
+  const cat = CATEGORIES[r.category];
+  const m = L.marker([r.lat, r.lng], { icon:makeIcon(cat.color) });
+  m.bindPopup(buildPopupHtml(r), { maxWidth: 340 });
   m._data = r;
   return m;
 });
@@ -911,7 +1067,7 @@ function refresh(){
     el.className = 'item';
     el.innerHTML = `<span class="dot" style="background:${cat.color}"></span>
                     <span><span class="t">${esc(r.name)}</span>
-                    <span class="m" style="display:block">${dist}${esc(r.city)} · ${cat.label}</span></span>`;
+                    <span class="m" style="display:block">${dist}${esc(r.city)} · ${esc(catLabel(r.category))}</span></span>`;
     el.onclick = () => revealMarker(m);
     list.appendChild(el);
   });
@@ -1015,28 +1171,32 @@ function renderQuickRef(){
   const rows = (QUICK_REF.statewide || [])
     .concat(selectedCounty ? (QUICK_REF[selectedCounty] || []) : []);
   el.innerHTML = rows.map(r =>
-    `<a href="${esc(r.href || `tel:${r.tel}`)}"><span class="need">${esc(r.need)}</span><span class="num">${esc(r.num)}</span></a>`
+    `<a href="${esc(r.href || `tel:${r.tel}`)}"><span class="need">${esc(needLabel(r.need))}</span><span class="num">${esc(r.num)}</span></a>`
   ).join("");
 }
 
 /* ============ PANEL UI ============ */
 const catsEl = document.getElementById('cats');
-for (const [key, c] of Object.entries(CATEGORIES)){
-  const b = document.createElement('button');
-  b.className = 'chip';
-  b.dataset.cat = key;
-  b.setAttribute('aria-pressed', 'true');
-  b.style.setProperty('--cc', c.color);
-  b.innerHTML = `<span class="dot"></span>${c.label}`;
-  b.onclick = () => {
-    const on = b.getAttribute('aria-pressed') === 'true';
-    b.setAttribute('aria-pressed', String(!on));
-    on ? enabledCats.delete(key) : enabledCats.add(key);
-    refresh();
-    syncUrlState();
-  };
-  catsEl.appendChild(b);
+function rebuildCategoryChips(){
+  catsEl.innerHTML = '';
+  for (const [key, c] of Object.entries(CATEGORIES)){
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.dataset.cat = key;
+    b.setAttribute('aria-pressed', String(enabledCats.has(key)));
+    b.style.setProperty('--cc', c.color);
+    b.innerHTML = `<span class="dot"></span>${esc(catLabel(key))}`;
+    b.onclick = () => {
+      const on = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', String(!on));
+      on ? enabledCats.delete(key) : enabledCats.add(key);
+      refresh();
+      syncUrlState();
+    };
+    catsEl.appendChild(b);
+  }
 }
+rebuildCategoryChips();
 
 /* Searching only ever touched the marker-cluster layer + list, never the
    map's own pan/zoom — so if you'd zoomed into a county (or anywhere
@@ -1114,7 +1274,7 @@ function activateNearMe(pos, opts){
   opts = opts || {};
   userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
   nearBtn.setAttribute('aria-pressed', 'true');
-  nearBtn.textContent = "◎ Near me — on";
+  nearBtn.textContent = t('nearme.on');
   if (userMarker) map.removeLayer(userMarker);
   userMarker = L.marker([userLoc.lat, userLoc.lng], {
     icon: L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9], html:'<div class="you"></div>' }),
@@ -1130,18 +1290,18 @@ nearBtn.onclick = () => {
   if (userLoc){
     userLoc = null;
     nearBtn.setAttribute('aria-pressed', 'false');
-    nearBtn.textContent = "◎ Near me";
+    nearBtn.textContent = t('nearme.off');
     if (userMarker){ map.removeLayer(userMarker); userMarker = null; }
     refresh();
     return;
   }
-  if (!navigator.geolocation){ nearBtn.textContent = "◎ location unavailable"; return; }
-  nearBtn.textContent = "◎ locating…";
+  if (!navigator.geolocation){ nearBtn.textContent = t('nearme.unavailable'); return; }
+  nearBtn.textContent = t('nearme.locating');
   navigator.geolocation.getCurrentPosition(
     pos => activateNearMe(pos, { detectCounty:true, switchToList:true }),
     () => {
-      nearBtn.textContent = "◎ location blocked";
-      setTimeout(() => { nearBtn.textContent = "◎ Near me"; }, 2500);
+      nearBtn.textContent = t('nearme.blocked');
+      setTimeout(() => { nearBtn.textContent = t('nearme.off'); }, 2500);
     },
     { timeout: 10000 }
   );
@@ -1165,12 +1325,12 @@ function printRenderList(){
     if (r.url) rows.push(`<div class="pv-url">${esc(r.url)}</div>`);
     return `<div class="pv-item">
               <div class="pv-name">${esc(r.name)}</div>
-              <div class="pv-cat">${esc(CATEGORIES[r.category].label)}</div>
+              <div class="pv-cat">${esc(catLabel(r.category))}</div>
               ${rows.join("")}
             </div>`;
   }).join("");
   printViewEl.innerHTML = `<h1>Path to Freedom — ${esc(scopeLabel)}</h1>
-    <div class="pv-meta">${shown.length} resources · printed ${new Date().toLocaleDateString()} · verify hours/services before visiting · in immediate danger, call 911</div>
+    <div class="pv-meta">${shown.length} ${esc(t('print.meta'))} ${new Date().toLocaleDateString()} · ${esc(t('print.metaTail'))}</div>
     ${cards}`;
 }
 document.getElementById('printListBtn').addEventListener('click', () => {
@@ -1242,13 +1402,13 @@ function hideLocBanner(){
 })();
 document.getElementById('lbYes').addEventListener('click', () => {
   const btn = document.getElementById('lbYes');
-  btn.textContent = "◎ Locating…";
+  btn.textContent = t('lb.locating');
   navigator.geolocation.getCurrentPosition(pos => {
     setLocChoice('yes');
     hideLocBanner();
     activateNearMe(pos, { detectCounty:true, switchToList:true });
   }, () => {
-    btn.textContent = "◎ Location blocked — try Near Me in the list";
+    btn.textContent = t('lb.blocked');
     setTimeout(hideLocBanner, 3200);
     // Don't remember "yes" for a request that just failed — ask again
     // next visit instead of silently doing nothing forever.
@@ -1355,7 +1515,7 @@ function jobsStatus(msg) {
 function refreshJobsForCounty(){
   document.getElementById('jobsCountyLabel').textContent = selectedCounty ? `(${selectedCounty} County)` : "";
   if (!selectedCounty){
-    jobsStatus("Pick a county above to search local jobs.");
+    jobsStatus(t('jobs.pickCounty'));
     return;
   }
   const seat = COUNTY_SEATS[selectedCounty];
@@ -1365,9 +1525,10 @@ function refreshJobsForCounty(){
     radius: String(JOBS_SEARCH_RADIUS),
   }).toString();
   const url = `https://www.careeronestop.org/Toolkit/Jobs/find-jobs-results.aspx?${qs}`;
-  jobsPanelEl.innerHTML = `<div class="supply-links"><a class="supply-link" href="${esc(url)}" target="_blank" rel="noopener">Search current jobs near ${esc(seat)} <span class="si-arrow">↗</span></a></div>`;
+  jobsPanelEl.innerHTML = `<div class="supply-links"><a class="supply-link" href="${esc(url)}" target="_blank" rel="noopener">${esc(t('jobs.searchNear'))} ${esc(seat)} <span class="si-arrow">↗</span></a></div>`;
 }
 
+applyI18n();
 selectCounty(null, { fly:false });
 readUrlState();
 
@@ -1466,8 +1627,8 @@ function armOrFireQuickExit(btn, armedLabel){
 }
 const quickExitBtn = document.getElementById('quickExitBtn');
 const quickExitFloat = document.getElementById('quickExitFloat');
-quickExitBtn.addEventListener('click', () => armOrFireQuickExit(quickExitBtn, "Tap again to leave now"));
-quickExitFloat.addEventListener('click', () => armOrFireQuickExit(quickExitFloat, "Tap again"));
+quickExitBtn.addEventListener('click', () => armOrFireQuickExit(quickExitBtn, t('qe.armed')));
+quickExitFloat.addEventListener('click', () => armOrFireQuickExit(quickExitFloat, t('qe.armedFloat')));
 /* Escape reuses the exact same armed state/visual feedback as whichever
    button is currently visible, rather than a silent separate trigger —
    Leaflet's own popups already close on the FIRST Escape press by
@@ -1477,7 +1638,7 @@ quickExitFloat.addEventListener('click', () => armOrFireQuickExit(quickExitFloat
 window.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   const visibleBtn = getComputedStyle(quickExitFloat).display !== 'none' ? quickExitFloat : quickExitBtn;
-  armOrFireQuickExit(visibleBtn, visibleBtn === quickExitFloat ? "Tap again" : "Tap again to leave now");
+  armOrFireQuickExit(visibleBtn, visibleBtn === quickExitFloat ? t('qe.armedFloat') : t('qe.armed'));
 });
 
 /* ============ CLEAR MY DATA (shared/library computer privacy) ============
