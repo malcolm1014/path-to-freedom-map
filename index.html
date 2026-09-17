@@ -27,6 +27,33 @@
 <meta name="twitter:title" content="Path to Freedom — Florida Resource Map">
 <meta name="twitter:description" content="Free interactive map of homelessness and poverty resources across Florida — pantries, shelters, clothing, transportation, clinics, and coordinating agencies. Growing county by county.">
 <meta name="twitter:image" content="https://malcolm1014.github.io/path-to-freedom-map/og-image.jpg">
+<link rel="canonical" href="https://malcolm1014.github.io/path-to-freedom-map/">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+
+<!-- JSON-LD structured data — a real, if partial, fix for the "content
+     only exists after JS runs" SEO gap this project's own feature
+     research flagged: this block describes the SITE ITSELF (crawlable
+     immediately, no JS needed) rather than the 1,600 individual
+     resources, which would need real per-URL pages to be indexable —
+     see the per-county static pages this project adds separately for
+     that half of the fix. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Path to Freedom",
+  "alternateName": "Path to Freedom — Florida Resource Map",
+  "url": "https://malcolm1014.github.io/path-to-freedom-map/",
+  "description": "Free interactive map of homelessness and poverty resources across Florida — food pantries, shelters, clothing, transportation, clinics, mental health, and the coordinating agencies that connect them.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Path to Freedom",
+    "url": "https://malcolm1014.github.io/path-to-freedom-map/"
+  },
+  "isAccessibleForFree": true,
+  "inLanguage": "en"
+}
+</script>
 
 <!-- Leaflet + markercluster from CDN — no build tools, no API keys -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">

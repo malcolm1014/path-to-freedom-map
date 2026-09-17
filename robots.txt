@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://malcolm1014.github.io/path-to-freedom-map/sitemap.xml
