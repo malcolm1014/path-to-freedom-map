@@ -1,0 +1,38 @@
+name: Regenerate county pages
+
+# Keeps county/*.html + sitemap.xml (see scripts/generate-county-pages.js)
+# in sync with data.js automatically — the whole point of these pages is
+# SEO, which only works if they're never allowed to go stale relative to
+# the data someone's actually citing them for. Deliberately gated to just
+# these two paths (not every push) so unrelated commits don't spend
+# Actions minutes or produce no-op commits, and so this workflow's OWN
+# commits (which only ever touch county/ and sitemap.xml, never data.js
+# or the generator script itself) can never re-trigger it — no risk of
+# an infinite loop.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data.js'
+      - 'scripts/generate-county-pages.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/generate-county-pages.js
+      - name: Commit and push if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add county/ sitemap.xml
+          git diff --staged --quiet || git commit -m "Auto-regenerate county pages + sitemap [skip ci]"
+          git push
