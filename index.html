@@ -263,6 +263,39 @@
     font-family:var(--mono); font-size:.58rem; letter-spacing:.03em;
     color:var(--muted); padding:11px 18px; border-top:1px solid var(--line); line-height:1.6;
   }
+  /* Quick Exit: plain wording (not "Quick Exit" itself — usability
+     research this project drew on found that phrase tests poorly,
+     people don't reliably understand it), deliberately not styled as an
+     alarm/red button — over-branding a safety feature can itself be a
+     tell to someone glancing at the screen. Always the first thing in
+     the header, above the site's own name. */
+  #quickExitBtn{
+    display:block; width:100%; text-align:center; margin-bottom:8px;
+    background:var(--glass-2); border:1px solid var(--line); border-radius:9px;
+    color:var(--text); font-family:var(--sans); font-size:.78rem; font-weight:600;
+    padding:9px 12px; cursor:pointer;
+  }
+  #quickExitBtn:hover{ background:rgba(255,255,255,.08); }
+  .qe-note{
+    font-size:.62rem; color:var(--muted); line-height:1.4; margin:0 0 10px;
+  }
+  #quickExitFloat{ display:none; }
+  @media (max-width:760px){
+    #quickExitFloat{
+      display:block; position:fixed; left:8px; top:calc(env(safe-area-inset-top) + 8px);
+      z-index:1200; background:rgba(10,15,12,.75); backdrop-filter:blur(8px);
+      border:1px solid var(--line); border-radius:8px; color:var(--text);
+      font-family:var(--sans); font-size:.7rem; font-weight:600;
+      padding:6px 10px; cursor:pointer;
+    }
+    body.mobile-list-active #quickExitFloat{ display:none; } /* the header copy is already visible on the List tab */
+  }
+  #clearDataBtn{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    font-family:var(--mono); font-size:.6rem; letter-spacing:.03em; color:var(--muted);
+    padding:8px 18px; cursor:pointer; border-top:1px solid var(--line);
+  }
+  #clearDataBtn:hover{ color:var(--text); background:rgba(255,255,255,.04); }
 
   /* ============ POPUPS ============ */
   .leaflet-popup-content-wrapper{
@@ -467,9 +500,12 @@
 </div>
 
 <div id="credit-badge">Created Open Source by Savvy Security LLC @ <a href="https://www.facebook.com/savvyissecurity" target="_blank" rel="noopener">facebook.com/savvyissecurity</a></div>
+<button id="quickExitFloat" type="button" title="Instantly leaves this site — press twice, or press Escape twice">Leave site ×2</button>
 
 <aside id="panel">
   <header class="pad hairline">
+    <button id="quickExitBtn" type="button" title="Instantly leaves this site — press twice, or press Escape twice">Leave this site now ×2</button>
+    <p class="qe-note">Doesn't clear your browser history or stop other monitoring on this device — press Ctrl/Cmd+H to review or clear real history separately.</p>
     <h1><span class="mark">◆</span>Path to Freedom</h1>
     <p class="sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
     <div class="status"><b id="visCount"></b> RESOURCES SHOWN <span id="countyCoverage" style="opacity:.7"></span></div>
@@ -518,6 +554,7 @@
 
   </div><!-- /panelbody -->
 
+  <button id="clearDataBtn" type="button">On a library or shared computer? Clear my saved county/location ↻</button>
   <footer>data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors</footer>
 </aside>
 
@@ -1293,6 +1330,62 @@ window.addEventListener('popstate', () => {
     ptfCountyPushed = false;
     selectCounty(null, { fly:true });
   }
+});
+
+/* ============ QUICK EXIT (browsing-safety, not just shelter-address secrecy) ============
+   This protects the PERSON USING THE SITE from someone glancing at their
+   screen — a different concern from the existing "don't publish a
+   shelter's real address" pattern used throughout data.js. Standard
+   pattern on DV/crisis-resource sites: an always-visible exit that
+   instantly leaves for a neutral page. Deliberately requires two presses
+   (button or Escape) rather than firing on the first tap/keypress —
+   the first press just arms it, so a single stray click/Escape (closing
+   a popup, say) can't accidentally kick someone off the site they're
+   trying to use. location.replace() (not .href) means the browser's own
+   "back" button from the neutral page returns to whatever was open
+   BEFORE this site, not back here. */
+function fireQuickExit(){
+  location.replace('https://www.weather.gov/');
+}
+let qeArmed = false, qeArmTimer = null;
+function armOrFireQuickExit(btn, armedLabel){
+  if (qeArmed){ clearTimeout(qeArmTimer); fireQuickExit(); return; }
+  qeArmed = true;
+  const orig = btn.textContent;
+  btn.textContent = armedLabel;
+  qeArmTimer = setTimeout(() => { qeArmed = false; btn.textContent = orig; }, 2500);
+}
+const quickExitBtn = document.getElementById('quickExitBtn');
+const quickExitFloat = document.getElementById('quickExitFloat');
+quickExitBtn.addEventListener('click', () => armOrFireQuickExit(quickExitBtn, "Tap again to leave now"));
+quickExitFloat.addEventListener('click', () => armOrFireQuickExit(quickExitFloat, "Tap again"));
+/* Escape reuses the exact same armed state/visual feedback as whichever
+   button is currently visible, rather than a silent separate trigger —
+   Leaflet's own popups already close on the FIRST Escape press by
+   default, so two natural, unrelated Escape presses (closing two
+   different popups back to back) shouldn't be able to silently exit the
+   whole site with no on-screen sign anything is "armed." */
+window.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const visibleBtn = getComputedStyle(quickExitFloat).display !== 'none' ? quickExitFloat : quickExitBtn;
+  armOrFireQuickExit(visibleBtn, visibleBtn === quickExitFloat ? "Tap again" : "Tap again to leave now");
+});
+
+/* ============ CLEAR MY DATA (shared/library computer privacy) ============
+   The only thing this site persists locally is the location-banner choice
+   and last-matched county (both `ptf_`-prefixed keys) — no accounts, no
+   tracking. On a shared library PC that DOESN'T reset between patrons,
+   though, a remembered county is a small but real signal about the
+   previous visitor. One tap wipes every `ptf_`-prefixed key (future-proof
+   if more are ever added) and reloads clean. */
+document.getElementById('clearDataBtn').addEventListener('click', () => {
+  if (!confirm("Clear your saved county and location preference from this browser? This can't be undone, and the page will reload.")) return;
+  try {
+    for (const key of Object.keys(localStorage)){
+      if (key.startsWith('ptf_')) localStorage.removeItem(key);
+    }
+  } catch(e){ /* private mode, etc — nothing to clear */ }
+  location.href = location.pathname;
 });
 
 /* ============ PWA: SERVICE WORKER (offline resilience + installability) ============
