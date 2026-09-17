@@ -549,8 +549,18 @@
   </div>
 </div>
 
-<!-- Resource rows live in data.js -->
-<script src="data.js"></script>
+<!-- Resource rows live in data.js. The ?v= query string is a manually-bumped
+     cache-buster: bump it any time data.js changes. Needed because a plain
+     <script src> load of this file can be served straight from the
+     browser's own disk HTTP cache (or picked up by its preload scanner
+     before the service worker's fetch handler gets a chance to intercept
+     it), bypassing both sw.js's {cache:'no-store'} fetch AND a plain
+     reload/hard-reload — confirmed via Resource Timing API on 2026-09-17:
+     the <script src> load returned stale bytes even though an in-page
+     fetch('data.js') right after it returned fresh ones. A URL that
+     changes on every real update sidesteps the whole caching-layer
+     ambiguity instead of trying to out-guess it. -->
+<script src="data.js?v=20260917c"></script>
 <!-- Precise Hernando County boundary polygon (real Census data, not hand-drawn) -->
 <script src="boundary.js"></script>
 <!-- All 67 Florida county boundaries, simplified, for the statewide drill-down -->
