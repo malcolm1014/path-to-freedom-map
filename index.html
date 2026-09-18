@@ -314,6 +314,28 @@
   .popup .bus-times{ font-size:.71rem; color:var(--text); line-height:1.6; }
   .popup .bus-times b{ display:block; font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:7px 0 3px; }
   .popup .bus-times b:first-child{ margin-top:0; }
+
+  /* Live bus position marker — a directional wedge (rotated to heading via
+     inline transform) rather than a plain dot, so a glance shows which
+     way the bus is actually moving, not just where it is. Pulses gently
+     to read as "live" at a glance, distinct from the static stop dots. */
+  .bus-live-marker{
+    width:0; height:0;
+    border-left:7px solid transparent; border-right:7px solid transparent;
+    border-bottom:14px solid var(--pc);
+    filter:drop-shadow(0 0 4px rgba(0,0,0,.5));
+    animation:buslivepulse 1.8s ease-in-out infinite;
+  }
+  @keyframes buslivepulse{ 50%{ opacity:.55; } }
+  .popup .live-badge{
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono);
+    font-size:.6rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    color:#e6544a; margin-bottom:6px;
+  }
+  .popup .live-badge .dot{ width:6px; height:6px; border-radius:50%; background:#e6544a; animation:buslivepulse 1.4s ease-in-out infinite; }
+  .bus-note .live-status{ display:block; margin-top:4px; font-size:.68rem; }
+  .bus-note .live-status.ok{ color:#e6544a; }
+  .bus-note .live-status.off{ color:var(--muted); }
   .you{
     width:14px; height:14px; border-radius:50%; background:var(--accent);
     border:2px solid rgba(234,242,235,.95);
@@ -661,6 +683,7 @@
     .pin, .chip, .item{ transition:none; }
     .ccombo-chev{ transition:none; }
     .you{ animation:none; }
+    .bus-live-marker, .popup .live-badge .dot{ animation:none; }
   }
 
   /* ============ PRINT VIEW ============
@@ -1306,21 +1329,124 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
     m.addTo(busStopClustersByAgency[stop.agencyId]);
   }
 
+  /* ============ LIVE BUS POSITIONS ============
+     A genuinely different data source from everything else on this map:
+     routes/stops/schedules above are a build-time GTFS snapshot (see
+     scripts/fetch-bus-data.js), fine to ship as static JSON and work
+     offline. Live vehicle positions can't be pre-baked — they're only
+     valid for a few seconds — so this is the one part of this feature
+     that needs a live network call on every poll, same "requires a
+     connection, degrades quietly if it fails" spirit as the "Near me"
+     button's geolocation call or the county-detect reverse-geocode call
+     elsewhere in this script.
+
+     Reuses the LIVE endpoint of the sibling thebus-hernando (TriBus)
+     project's already-running backend (GET /api/live-buses) rather than
+     re-implementing Passio/Avail vendor integration here — that backend
+     already fetches both vendors, merges them, and sanity-filters
+     garbage positions (see its liveBusSanity.js), and already has CORS
+     enabled for exactly this kind of cross-site read. This is the one
+     piece of this feature with a genuine runtime dependency on another
+     service being up — if it's slow/asleep/down, live positions just
+     don't appear (static routes/schedules above are entirely unaffected,
+     they never depended on this endpoint). Free-tier Render services
+     spin down when idle, so the FIRST poll after a while can take up to
+     ~30-60s to respond — the fetch below has a generous timeout to
+     accommodate a cold start rather than giving up too early. */
+  const LIVE_BUSES_URL = 'https://thebus-hernando-backend.onrender.com/api/live-buses';
+  const LIVE_POLL_MS = 20000;
+  const busLiveLayer = L.layerGroup();
+  let livePollTimer = null;
+  let liveFetchInFlight = null;
+
+  /** Best-effort match from a live position's own route identifier to a GTFS route (for color + a friendlier name in the popup) — NOT guaranteed, since the live AVL vendor's route numbering doesn't always match the GTFS feed's route_id 1:1 (confirmed true for Hernando: Passio reports "Route 3"/"Route 10"/etc, while this county's GTFS feed names some of those same routes by color — "Blue"/"Green"/"Purple" — instead). Falls back to the live position's own routeName/routeId text with a neutral color rather than guessing wrong. */
+  function matchLiveBusRoute(bus){
+    if (bus.agencyId === 'pasco' && bus.routeId){
+      const r = BUS_DATA.routes[`pasco:${bus.routeId}`];
+      if (r) return r;
+    }
+    if (bus.agencyId === 'hernando' && bus.routeName){
+      const r = Object.values(BUS_DATA.routes).find(r => r.agencyId === 'hernando' && r.longName === bus.routeName);
+      if (r) return r;
+    }
+    return null;
+  }
+
+  function buildLiveBusPopupHtml(bus, fetchedAt){
+    const route = matchLiveBusRoute(bus);
+    const label = (route && (route.shortName || route.longName)) || bus.routeName || (bus.routeId ? `Route ${bus.routeId}` : 'Bus');
+    const agencyLabel = BUS_DATA.agencies[bus.agencyId] ? BUS_DATA.agencies[bus.agencyId].label : bus.agencyId;
+    const ageSec = Math.max(0, Math.round((Date.now() - new Date(fetchedAt).getTime()) / 1000));
+    return `<div class="popup">
+      <span class="live-badge"><span class="dot"></span>Live position</span>
+      <h3>${esc(label)}</h3>
+      <span class="tag" style="color:${esc((route && route.color) || getCSS('--c-transportation'))}; border-color:${esc((route && route.color) || getCSS('--c-transportation'))}">${esc(agencyLabel)}</span>
+      <p>${bus.speed != null ? Math.round(bus.speed) + ' mph. ' : ''}Position reported ${ageSec}s ago — refreshes automatically while this layer is on.</p>
+    </div>`;
+  }
+
+  async function fetchLiveBuses(activeAgencyIds){
+    if (liveFetchInFlight) return; // don't stack overlapping polls if one's still in flight (e.g. a slow cold start)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000); // generous — Render free tier can take a while to wake from idle
+    liveFetchInFlight = fetch(LIVE_BUSES_URL, { signal:controller.signal })
+      .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(({ buses, fetchedAt }) => {
+        busLiveLayer.clearLayers();
+        let shown = 0;
+        for (const bus of buses){
+          if (!activeAgencyIds.has(bus.agencyId)) continue;
+          const route = matchLiveBusRoute(bus);
+          const color = (route && route.color) || getCSS('--c-transportation');
+          const heading = Number.isFinite(bus.course) ? bus.course : 0;
+          const icon = L.divIcon({
+            className:'', iconSize:[14,14], iconAnchor:[7,7],
+            html:`<div class="bus-live-marker" style="--pc:${esc(color)}; transform:rotate(${heading}deg)"></div>`
+          });
+          L.marker([bus.lat, bus.lon], { icon })
+            .bindPopup(buildLiveBusPopupHtml(bus, fetchedAt), { maxWidth:260 })
+            .addTo(busLiveLayer);
+          shown++;
+        }
+        const statusEl = document.getElementById('busLiveStatus');
+        if (statusEl) statusEl.textContent = shown ? `🔴 ${shown} bus${shown === 1 ? '' : 'es'} live right now` : 'No live buses reporting right now (outside service hours?)';
+        if (statusEl) statusEl.className = 'live-status ok';
+      })
+      .catch(() => {
+        const statusEl = document.getElementById('busLiveStatus');
+        if (statusEl){ statusEl.textContent = 'Live positions unavailable right now — routes/schedules above are unaffected.'; statusEl.className = 'live-status off'; }
+      })
+      .finally(() => { clearTimeout(timeout); liveFetchInFlight = null; });
+    return liveFetchInFlight;
+  }
+
+  function startLiveBusPolling(activeAgencyIds){
+    stopLiveBusPolling();
+    fetchLiveBuses(activeAgencyIds);
+    livePollTimer = setInterval(() => fetchLiveBuses(activeAgencyIds), LIVE_POLL_MS);
+  }
+  function stopLiveBusPolling(){
+    if (livePollTimer){ clearInterval(livePollTimer); livePollTimer = null; }
+    busLiveLayer.clearLayers();
+    const statusEl = document.getElementById('busLiveStatus');
+    if (statusEl){ statusEl.textContent = ''; }
+  }
+
   /** Shows only the agency(ies) relevant to the current county filter — both when "All Florida" or a bus-covered county is selected, none (with an explanatory note) when a non-covered county is selected. Re-run from selectCounty() on every change, and immediately on toggle-on. */
   function refreshBusLayer(){
     const coveredCounties = Object.values(BUS_DATA.agencies).map(a => a.county);
     let activeAgencyIds;
     if (!selectedCounty){
       activeAgencyIds = new Set(Object.keys(BUS_DATA.agencies));
-      busNoteEl.textContent = `Covers ${coveredCounties.join(' & ')} counties so far — more coming.`;
+      busNoteEl.innerHTML = `Covers ${esc(coveredCounties.join(' & '))} counties so far — more coming.<span class="live-status" id="busLiveStatus"></span>`;
     } else {
       const agencyEntry = Object.entries(BUS_DATA.agencies).find(([, a]) => a.county === selectedCounty);
       if (agencyEntry){
         activeAgencyIds = new Set([agencyEntry[0]]);
-        busNoteEl.textContent = `Showing ${selectedCounty} County's bus routes.`;
+        busNoteEl.innerHTML = `Showing ${esc(selectedCounty)} County's bus routes.<span class="live-status" id="busLiveStatus"></span>`;
       } else {
         activeAgencyIds = new Set();
-        busNoteEl.textContent = `No bus route data for ${selectedCounty} County yet — covers ${coveredCounties.join(' & ')} only, for now.`;
+        busNoteEl.innerHTML = `No bus route data for ${esc(selectedCounty)} County yet — covers ${esc(coveredCounties.join(' & '))} only, for now.`;
       }
     }
     if (!busLayerOn) return;
@@ -1329,6 +1455,13 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
       const routeGroup = busRouteLinesByAgency[agencyId], stopGroup = busStopClustersByAgency[agencyId];
       if (show){ if (!map.hasLayer(routeGroup)) map.addLayer(routeGroup); if (!map.hasLayer(stopGroup)) map.addLayer(stopGroup); }
       else { if (map.hasLayer(routeGroup)) map.removeLayer(routeGroup); if (map.hasLayer(stopGroup)) map.removeLayer(stopGroup); }
+    }
+    if (activeAgencyIds.size){
+      if (!map.hasLayer(busLiveLayer)) map.addLayer(busLiveLayer);
+      startLiveBusPolling(activeAgencyIds);
+    } else {
+      if (map.hasLayer(busLiveLayer)) map.removeLayer(busLiveLayer);
+      stopLiveBusPolling();
     }
   }
 
@@ -1340,8 +1473,20 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
         if (map.hasLayer(busRouteLinesByAgency[agencyId])) map.removeLayer(busRouteLinesByAgency[agencyId]);
         if (map.hasLayer(busStopClustersByAgency[agencyId])) map.removeLayer(busStopClustersByAgency[agencyId]);
       }
+      if (map.hasLayer(busLiveLayer)) map.removeLayer(busLiveLayer);
+      stopLiveBusPolling();
     }
     refreshBusLayer();
+  });
+
+  /* Stop polling a hidden tab — no point burning the free-tier backend's
+     limited resources (or the rider's battery) refreshing positions no
+     one is looking at. Resumes on return if the layer is still meant to
+     be on. */
+  document.addEventListener('visibilitychange', () => {
+    if (!busLayerOn) return;
+    if (document.hidden) stopLiveBusPolling();
+    else refreshBusLayer();
   });
 
   window.refreshBusLayer = refreshBusLayer; // called from selectCounty() below
