@@ -60,6 +60,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<!-- Fuse.js: typo-tolerant client-side search over the resource list.
+     Not needed for speed (a plain substring filter over 1,600 rows is
+     already sub-millisecond) — the value is fuzzy/weighted matching, so
+     someone typing "brooksvile" or searching under stress on an
+     unfamiliar keyboard still finds results. See the search-input
+     handler below for the fallback if this CDN load ever fails. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/7.0.0/fuse.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1008,10 +1015,33 @@ let selectedCounty = null; // null = All Florida
    of location.search, specifically so it survives those earlier calls. */
 const initialUrlParams = new URLSearchParams(location.search);
 
+/* Fuse.js gives typo-tolerant, weighted (name > city/org) search — a
+   plain substring filter is already fast enough at 1,600 rows, this is
+   purely about someone finding "Brooksville" even if they typed
+   "brooksvile". Graceful degradation if the CDN load ever fails:
+   searchFuse stays null and updateSearchMatches() falls back to the
+   original exact-substring behavior rather than breaking search. */
+const searchFuse = (typeof Fuse !== 'undefined') ? new Fuse(RESOURCES, {
+  keys: [
+    { name: 'name', weight: 2 },
+    { name: 'city', weight: 1 },
+    { name: 'org', weight: 1 },
+  ],
+  threshold: 0.35,
+  ignoreLocation: true,
+}) : null;
+let searchMatchSet = null; // null = no active search; Set = current fuzzy-match results
+function updateSearchMatches(){
+  if (searchTerm === ""){ searchMatchSet = null; return; }
+  searchMatchSet = searchFuse
+    ? new Set(searchFuse.search(searchTerm).map(res => res.item))
+    : new Set(RESOURCES.filter(r => (r.name + " " + r.city).toLowerCase().includes(searchTerm)));
+}
+
 function visible(r){
   return enabledCats.has(r.category)
     && (!selectedCounty || r.county === selectedCounty)
-    && (searchTerm === "" || (r.name + " " + r.city).toLowerCase().includes(searchTerm));
+    && (searchTerm === "" || (searchMatchSet && searchMatchSet.has(r)));
 }
 
 /* Bookmarkable/shareable filter state — the county/category/search
@@ -1048,6 +1078,7 @@ function readUrlState(){
   const q = p.get('q');
   if (q){
     searchTerm = q.toLowerCase();
+    updateSearchMatches();
     document.getElementById('search').value = q;
   }
   if (county || catsParam || q){ refresh(); syncUrlState(); }
@@ -1218,6 +1249,7 @@ function flyToSearchResults(){
 
 document.getElementById('search').addEventListener('input', e => {
   searchTerm = e.target.value.trim().toLowerCase();
+  updateSearchMatches();
   refresh();
   syncUrlState();
   clearTimeout(searchFlyTimer);
