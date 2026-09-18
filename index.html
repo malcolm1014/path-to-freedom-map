@@ -422,7 +422,7 @@
       color:var(--muted); transition:color .15s ease;
     }
     #mobileTabs button .ico{ font-size:1.15rem; line-height:1; }
-    #mobileTabs button[aria-pressed="true"]{ color:var(--accent); }
+    #mobileTabs button[aria-selected="true"]{ color:var(--accent); }
     #mobileTabs button:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
   }
 
@@ -586,7 +586,7 @@
     <p class="qe-note" data-i18n="qe.note">Doesn't clear your browser history or stop other monitoring on this device — press Ctrl/Cmd+H to review or clear real history separately.</p>
     <h1><span class="mark">◆</span>Path to Freedom</h1>
     <p class="sub" data-i18n="site.sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
-    <div class="status"><b id="visCount"></b> <span data-i18n="site.resourcesShown">RESOURCES SHOWN</span> <span id="countyCoverage" style="opacity:.7"></span></div>
+    <div class="status" aria-live="polite" aria-atomic="true"><b id="visCount"></b> <span data-i18n="site.resourcesShown">RESOURCES SHOWN</span> <span id="countyCoverage" style="opacity:.7"></span></div>
   </header>
 
   <div id="panelbody">
@@ -594,7 +594,7 @@
   <div class="pad hairline">
     <div class="label" data-i18n="label.county">County</div>
     <div class="searchwrap" style="margin-bottom:0;">
-      <select id="countySel" style="width:100%; padding:9px 12px; border-radius:10px; background:var(--glass-2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-size:.82rem;"></select>
+      <select id="countySel" data-i18n-aria="label.county" aria-label="County" style="width:100%; padding:9px 12px; border-radius:10px; background:var(--glass-2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-size:.82rem;"></select>
     </div>
   </div>
 
@@ -642,8 +642,8 @@
      full-screen panel; JS toggles body.mobile-list-active. Hidden entirely
      above 760px via the #mobileTabs media rule, so desktop is unaffected. -->
 <nav id="mobileTabs" role="tablist" aria-label="View">
-  <button id="tabMap" role="tab" aria-pressed="true" aria-controls="map"><span class="ico">◈</span>Map</button>
-  <button id="tabList" role="tab" aria-pressed="false" aria-controls="panel"><span class="ico">☰</span>List</button>
+  <button id="tabMap" role="tab" aria-selected="true" aria-controls="map"><span class="ico">◈</span>Map</button>
+  <button id="tabList" role="tab" aria-selected="false" aria-controls="panel"><span class="ico">☰</span>List</button>
 </nav>
 
 <div id="locBanner" role="region" aria-label="Use your location">
@@ -793,6 +793,7 @@ function applyI18n(){
   for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = t(el.dataset.i18nHtml);
   for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
   for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = t(el.dataset.i18nPlaceholder);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
   for (const btn of document.querySelectorAll('#langToggle button')) btn.setAttribute('aria-pressed', String(btn.dataset.lang === currentLang));
 }
 function setLang(lang){
@@ -1229,8 +1230,8 @@ const tabListBtn = document.getElementById('tabList');
 function setMobileView(view){
   const isList = view === 'list';
   document.body.classList.toggle('mobile-list-active', isList);
-  tabMapBtn.setAttribute('aria-pressed', String(!isList));
-  tabListBtn.setAttribute('aria-pressed', String(isList));
+  tabMapBtn.setAttribute('aria-selected', String(!isList));
+  tabListBtn.setAttribute('aria-selected', String(isList));
 }
 /* Safety net for the general version of the same bug the search fix
    above addresses: ANY time filtering changes what's shown without the
@@ -1568,6 +1569,51 @@ if (isMobile()) document.getElementById('jobsPanel').closest('details').removeAt
    tick later (setTimeout 0) so that sequence reads as "still open" and
    the one pushed history entry is left alone (now representing the new
    pin) rather than popped and re-pushed on every pin switch. */
+/* ============ POPUP ACCESSIBILITY ============
+   Separate listener registrations from the history-stack ones below
+   (Leaflet supports multiple listeners per event) — deliberately kept
+   decoupled from that carefully-tuned back-button logic rather than
+   folded into the same handlers, so a change here can't risk breaking
+   it. A Leaflet popup is a plain positioned <div> with no ARIA role,
+   no focus management, and no keyboard trap by default — screen-reader
+   users get no indication a dialog just opened, and keyboard users can
+   Tab straight out of it into markers/controls underneath. */
+let ptfPopupTriggerEl = null;
+map.on('popupopen', e => {
+  const popupEl = e.popup.getElement();
+  if (!popupEl) return;
+  const wrapper = popupEl.querySelector('.leaflet-popup-content-wrapper') || popupEl;
+  wrapper.setAttribute('role', 'dialog');
+  wrapper.setAttribute('aria-modal', 'true');
+  const h3 = popupEl.querySelector('.popup h3');
+  if (h3){
+    if (!h3.id) h3.id = 'popup-title-' + Math.random().toString(36).slice(2);
+    wrapper.setAttribute('aria-labelledby', h3.id);
+  }
+  ptfPopupTriggerEl = document.activeElement;
+  const closeBtn = popupEl.querySelector('.leaflet-popup-close-button');
+  (closeBtn || wrapper).focus({ preventScroll: true });
+});
+map.on('popupclose', () => {
+  if (ptfPopupTriggerEl && document.body.contains(ptfPopupTriggerEl)) ptfPopupTriggerEl.focus({ preventScroll: true });
+  ptfPopupTriggerEl = null;
+});
+/* Lightweight Tab trap: only intervenes at the first/last focusable
+   element's boundary, so normal tabbing WITHIN an open popup is
+   untouched — Tab from the last element wraps to the first (and Shift+
+   Tab from the first wraps to the last) instead of escaping to markers
+   or controls underneath. No-ops entirely when no popup is open. */
+window.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const openPopup = document.querySelector('.leaflet-popup');
+  if (!openPopup) return;
+  const focusables = openPopup.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])');
+  if (!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+});
+
 let ptfAnyPopupOpen = false;
 let ptfHistoryPushed = false;
 map.on('popupopen', () => {
