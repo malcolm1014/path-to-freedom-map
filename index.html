@@ -114,6 +114,26 @@
 
   /* ============ MAP (full bleed) ============ */
   #map{ position:fixed; inset:0; background:var(--bg); }
+  .skip-link{
+    position:fixed; top:-100px; left:12px; z-index:3000;
+    background:var(--accent); color:#07110a; font-family:var(--sans); font-weight:700; font-size:.85rem;
+    padding:10px 16px; border-radius:8px; text-decoration:none; transition:top .15s ease;
+  }
+  .skip-link:focus{ top:12px; }
+  @media (prefers-reduced-motion: reduce){ .skip-link{ transition:none; } }
+  #mapLoading{
+    position:fixed; inset:0; z-index:500;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:var(--bg); color:var(--muted);
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase;
+  }
+  #mapLoading .spin{
+    width:15px; height:15px; border-radius:50%;
+    border:2px solid var(--line); border-top-color:var(--accent);
+    animation:mapLoadingSpin .8s linear infinite;
+  }
+  @keyframes mapLoadingSpin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ #mapLoading .spin{ animation:none; } }
   .leaflet-container{ font-family:var(--sans); }
   .leaflet-control-zoom a{
     background:var(--glass) !important; color:var(--muted) !important;
@@ -126,6 +146,46 @@
     font-family:var(--mono); font-size:9px !important;
   }
   .leaflet-control-attribution a{ color:var(--muted) !important; }
+
+  /* ============ MAP LEGEND CONTROL ============ */
+  .legend-control{ position:relative; }
+  .legend-btn{
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    background:var(--glass) !important; color:var(--muted); cursor:pointer;
+    border:1px solid var(--line); border-radius:10px; backdrop-filter:blur(10px);
+    font-size:1rem; line-height:1; padding:0;
+  }
+  .legend-btn:hover{ color:var(--text); }
+  .legend-btn[aria-expanded="true"]{ color:var(--accent); }
+  .legend-panel{
+    position:absolute; top:0; right:calc(100% + 8px);
+    width:220px; max-height:70vh; overflow-y:auto;
+    background:var(--glass); backdrop-filter:blur(18px) saturate(1.25);
+    -webkit-backdrop-filter:blur(18px) saturate(1.25);
+    border:1px solid var(--line); border-radius:12px;
+    box-shadow:0 16px 40px rgba(0,0,0,.5);
+    padding:10px; scrollbar-width:thin; scrollbar-color:rgba(166,190,166,.35) transparent;
+  }
+  .legend-panel::-webkit-scrollbar{ width:8px; }
+  .legend-panel::-webkit-scrollbar-thumb{ background:rgba(166,190,166,.30); border-radius:99px; }
+  .legend-title{
+    font-family:var(--mono); font-size:.6rem; font-weight:500; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); padding:2px 4px 7px;
+  }
+  .legend-title:not(:first-child){ margin-top:6px; border-top:1px solid var(--line); padding-top:9px; }
+  .legend-row{
+    display:flex; align-items:center; gap:8px; padding:4px; font-size:.75rem; color:var(--text);
+  }
+  .legend-row .swatch{ flex:none; width:9px; height:9px; border-radius:50%; background:var(--sc); }
+  .legend-row .swatch.line{ width:14px; height:2px; border-radius:0; }
+  .legend-row .swatch.square{ border-radius:2px; }
+  .legend-row .swatch.wedge{
+    width:0; height:0; background:none; border-radius:0;
+    border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid var(--sc);
+  }
+  @media (max-width:760px){
+    .legend-panel{ right:auto; left:calc(-1 * (220px - 34px)); top:calc(100% + 8px); }
+  }
 
   /* ============ CREDIT BADGE ============ */
   #credit-badge{
@@ -201,6 +261,15 @@
     color:var(--muted); margin-top:9px; text-transform:uppercase;
   }
   .status b{ color:var(--accent); font-weight:500; }
+  #clearFiltersBtn{
+    margin-top:8px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    font-family:var(--mono); font-size:.64rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); background:var(--glass-2); border:1px solid var(--line);
+    border-radius:999px; padding:4px 11px; transition:color .15s ease, border-color .15s ease;
+  }
+  #clearFiltersBtn:hover{ color:var(--text); border-color:var(--muted); }
+  #clearFiltersBtn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  #clearFiltersBtn[hidden]{ display:none; }
 
   .label{
     font-family:var(--mono); font-size:.6rem; font-weight:500; letter-spacing:.16em;
@@ -446,7 +515,12 @@
   .item:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
   .item .t{ font-size:.8rem; font-weight:500; line-height:1.35; }
   .item .m{ font-family:var(--mono); font-size:.62rem; color:var(--muted); margin-top:2px; }
-  #empty{ padding:16px 18px; color:var(--muted); font-size:.8rem; display:none; }
+  #empty{ padding:16px 18px; color:var(--muted); font-size:.8rem; line-height:1.6; display:none; }
+  #empty .empty-clear-link{
+    display:inline; background:none; border:none; padding:0; margin-top:4px;
+    color:var(--accent); font-family:inherit; font-size:inherit; cursor:pointer; text-decoration:underline;
+  }
+  #empty .empty-clear-link:hover{ color:var(--text); }
 
   footer{
     font-family:var(--mono); font-size:.58rem; letter-spacing:.03em;
@@ -716,7 +790,26 @@
 </head>
 <body>
 
-<div id="map"></div>
+<!-- Skip link — without it a keyboard/screen-reader user has to tab
+     through 10+ sidebar sections (header, county picker, quick-ref,
+     supplies, jobs, bus routes, categories, search, the full resource
+     list) before ever reaching the map. Visually hidden until focused,
+     standard skip-link pattern. #map itself gets tabindex="-1" below so
+     it's a valid, visible focus target even though it's not normally
+     focusable. -->
+<a href="#map" class="skip-link" data-i18n="a11y.skipToMap">Skip to map</a>
+
+<div id="map" tabindex="-1"></div>
+<!-- data.js/bus-data.js/FL_COUNTY_GEO.js (~2.3MB combined) load as blocking
+     <script src> tags below — #map exists in the DOM immediately but stays
+     visually empty (no tiles, no pins) until that inline script finishes
+     and Leaflet initializes. On a slow connection that's a plain dark
+     rectangle with no feedback that anything's happening. This overlay
+     paints instantly (pure HTML/CSS, no JS needed to appear) and is
+     removed the moment the map itself is constructed, a few lines into
+     the inline script below — see the removal right after `const map =
+     L.map(...)`. -->
+<div id="mapLoading" role="status" aria-live="polite"><span class="spin" aria-hidden="true"></span>Loading map…</div>
 
 <!-- Fallback for when data.js (880KB) fails to load — a dropped mobile
      connection or a timeout leaves RESOURCES undefined, which used to
@@ -746,6 +839,7 @@
     <h1><span class="mark">◆</span>Path to Freedom</h1>
     <p class="sub" data-i18n="site.sub">Homelessness &amp; poverty resources across Florida — pantries, shelters, clothing, transportation, and the agencies that tie them together. Growing county by county; pick yours below.</p>
     <div class="status" aria-live="polite" aria-atomic="true"><b id="visCount"></b> <span data-i18n="site.resourcesShown">RESOURCES SHOWN</span> <span id="countyCoverage" style="opacity:.7"></span></div>
+    <button id="clearFiltersBtn" type="button" hidden data-i18n="clearFilters.btn" data-i18n-title="clearFilters.title" title="Reset county, categories, search, near-me, and the bus layer back to defaults">✕ Clear all filters</button>
   </header>
 
   <div id="panelbody">
@@ -802,7 +896,7 @@
   </div>
 
   <div id="list"></div>
-  <div id="empty" data-i18n="list.empty">No resources match. Clear the search or turn categories back on.</div>
+  <div id="empty"></div>
   <div id="printView"></div>
 
   </div><!-- /panelbody -->
@@ -907,13 +1001,24 @@ const I18N = {
     'jobs.searchNear': "Search current jobs near",
     'label.busRoutes': "Bus routes", 'bus.show': "🚌 Show bus routes",
     'bus.title': "Show bus routes and stops for counties this map covers transit for",
+    'clearFilters.btn': "✕ Clear all filters",
+    'clearFilters.title': "Reset county, categories, search, near-me, and the bus layer back to defaults",
+    'a11y.skipToMap': "Skip to map",
+    'legend.toggle': "Map legend", 'legend.categories': "Categories",
+    'legend.transit': "Transit", 'legend.busRoute': "Bus route",
+    'legend.busStop': "Bus stop", 'legend.busLive': "Live bus position",
     'label.categories': "Categories", 'search.placeholder': "Search by name or city…",
     'nearme.title': "Sort the list by distance from your location",
     'nearme.off': "◎ Near me", 'nearme.on': "◎ Near me — on", 'nearme.locating': "◎ locating…",
     'nearme.blocked': "◎ location blocked", 'nearme.unavailable': "◎ location unavailable",
     'print.btn': "🖨 Print this list", 'print.title': "Print (or save as PDF) just the resources currently shown",
     'print.meta': "resources · printed", 'print.metaTail': "verify hours/services before visiting · in immediate danger, call 911",
-    'list.empty': "No resources match. Clear the search or turn categories back on.",
+    'list.emptyDefault': "No resources match. Clear the search or turn categories back on.",
+    'list.emptyPrefix': "No matches — you're",
+    'list.emptyReasonCounty': "viewing only",
+    'list.emptyReasonCats': "some categories turned off",
+    'list.emptyReasonSearch': "searching",
+    'list.emptyReasonNear': "sorted to your location",
     'clear.btn': "On a library or shared computer? Clear my saved county/location ↻",
     'footer.text': "data sweep aug 2026 · verify hours/services before visiting · not affiliated with any org listed · basemap © Esri, HERE, Garmin, © OpenStreetMap contributors",
     'lb.text': "Find shelters, food, and help closest to you right now?",
@@ -942,13 +1047,24 @@ const I18N = {
     'jobs.searchNear': "Buscar empleos actuales cerca de",
     'label.busRoutes': "Rutas de autobús", 'bus.show': "🚌 Mostrar rutas de autobús",
     'bus.title': "Mostrar rutas y paradas de autobús para los condados que este mapa cubre",
+    'clearFilters.btn': "✕ Borrar todos los filtros",
+    'clearFilters.title': "Restablece condado, categorías, búsqueda, cerca de mí y la capa de autobuses",
+    'a11y.skipToMap': "Saltar al mapa",
+    'legend.toggle': "Leyenda del mapa", 'legend.categories': "Categorías",
+    'legend.transit': "Transporte", 'legend.busRoute': "Ruta de autobús",
+    'legend.busStop': "Parada de autobús", 'legend.busLive': "Posición de autobús en vivo",
     'label.categories': "Categorías", 'search.placeholder': "Buscar por nombre o ciudad…",
     'nearme.title': "Ordenar la lista por distancia desde tu ubicación",
     'nearme.off': "◎ Cerca de mí", 'nearme.on': "◎ Cerca de mí — activado", 'nearme.locating': "◎ localizando…",
     'nearme.blocked': "◎ ubicación bloqueada", 'nearme.unavailable': "◎ ubicación no disponible",
     'print.btn': "🖨 Imprimir esta lista", 'print.title': "Imprimir (o guardar como PDF) solo los recursos mostrados actualmente",
     'print.meta': "recursos · impreso", 'print.metaTail': "verifica horarios/servicios antes de visitar · en peligro inmediato, llama al 911",
-    'list.empty': "Ningún recurso coincide. Borra la búsqueda o vuelve a activar las categorías.",
+    'list.emptyDefault': "Ningún recurso coincide. Borra la búsqueda o vuelve a activar las categorías.",
+    'list.emptyPrefix': "Sin resultados — estás",
+    'list.emptyReasonCounty': "viendo solo",
+    'list.emptyReasonCats': "algunas categorías desactivadas",
+    'list.emptyReasonSearch': "buscando",
+    'list.emptyReasonNear': "ordenado por tu ubicación",
     'clear.btn': "¿En una computadora de biblioteca o compartida? Borrar mi condado/ubicación guardados ↻",
     'footer.text': "revisión de datos ago 2026 · verifica horarios/servicios antes de visitar · sin afiliación con ninguna organización mencionada · mapa base © Esri, HERE, Garmin, © OpenStreetMap contributors",
     'lb.text': "¿Buscar refugios, comida y ayuda más cercanos a ti ahora?",
@@ -1010,6 +1126,7 @@ function setLang(lang){
   refresh();
   renderQuickRef();
   refreshJobsForCounty();
+  rebuildLegendContent();
 }
 document.getElementById('langToggle').addEventListener('click', e => {
   const btn = e.target.closest('button[data-lang]');
@@ -1053,6 +1170,7 @@ function milesTo(a, b){
 
 /* ============ MAP SETUP — statewide Florida default view ============ */
 const map = L.map('map', { zoomControl:false }).setView([27.9, -81.5], 7);
+document.getElementById('mapLoading').remove();
 L.control.zoom({ position:'topright' }).addTo(map);
 
 /* Muted "light gray canvas" basemap, no dark-mode option. Switched
@@ -1115,6 +1233,7 @@ const clusters = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   disableClusteringAtZoom: 13,
+  chunkedLoading: true, // adds 1600+ markers in chunks via requestAnimationFrame instead of blocking the main thread on first paint
   iconCreateFunction: c => {
     const n = c.getChildCount();
     // Bigger bubbles on mobile — easier to hit with a thumb, easier to
@@ -1301,7 +1420,7 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
   for (const agencyId of Object.keys(BUS_DATA.agencies)){
     busRouteLinesByAgency[agencyId] = L.layerGroup();
     busStopClustersByAgency[agencyId] = L.markerClusterGroup({
-      maxClusterRadius:50, showCoverageOnHover:false, spiderfyOnMaxZoom:true, disableClusteringAtZoom:15,
+      maxClusterRadius:50, showCoverageOnHover:false, spiderfyOnMaxZoom:true, disableClusteringAtZoom:15, chunkedLoading:true,
       iconCreateFunction: c => {
         const n = c.getChildCount();
         const size = isMobile() ? 34 : 28;
@@ -1310,13 +1429,38 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
     });
   }
 
+  /* Click-to-isolate a route — standard pattern in every polished GTFS
+     viewer (dims every other route rather than leaving 8-14 overlapping
+     lines all at once, which is what "just render all the GTFS data"
+     looks like). Click the same route again, or click empty map, to
+     reset. Kept as its own function (not inlined in the click handler)
+     since refreshBusLayer() also resets it when the county selection
+     changes — a highlighted route from a now-hidden agency shouldn't
+     linger dimming routes that just (re)appeared. */
+  const busRouteLineByRouteId = {};
+  let selectedBusRouteId = null;
+  function setRouteHighlight(routeId){
+    selectedBusRouteId = routeId;
+    for (const [id, line] of Object.entries(busRouteLineByRouteId)){
+      if (!routeId) line.setStyle({ opacity:.62, weight:4 });
+      else if (id === routeId){ line.setStyle({ opacity:.95, weight:5 }); line.bringToFront(); }
+      else line.setStyle({ opacity:.12, weight:3 });
+    }
+  }
+  map.on('click', () => { if (selectedBusRouteId) setRouteHighlight(null); });
+
   for (const route of Object.values(BUS_DATA.routes)){
     if (!route.shapePoints || route.shapePoints.length < 2) continue;
     const line = L.polyline(route.shapePoints, {
       color: route.color || getCSS('--c-transportation'), weight:4, opacity:.62, className:'bus-route-line'
     });
     line.bindPopup(buildRoutePopupHtml(route), { maxWidth:280 });
+    line.on('click', e => {
+      L.DomEvent.stopPropagation(e);
+      setRouteHighlight(selectedBusRouteId === route.id ? null : route.id);
+    });
     line.addTo(busRouteLinesByAgency[route.agencyId]);
+    busRouteLineByRouteId[route.id] = line;
   }
 
   for (const stop of Object.values(BUS_DATA.stops)){
@@ -1358,6 +1502,18 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
   const busLiveLayer = L.layerGroup();
   let livePollTimer = null;
   let liveFetchInFlight = null;
+  let consecutiveLiveFailures = 0;
+  /* Keyed by "agencyId:busId" so a poll can UPDATE an existing marker's
+     target position/heading instead of destroying and recreating every
+     marker every 20s (which is what made buses visibly "teleport" before
+     this). { marker, fromLat, fromLng, toLat, toLng, fromHeading,
+     toHeading, animStart, seenThisPoll } — animateLiveBuses() below
+     tweens from/to on every requestAnimationFrame tick, TRAVIC's
+     technique for exactly this (GTFS-rt/AVL feeds only ever give you a
+     position every N seconds; interpolating between the last two known
+     points reads as continuous movement instead of a jump-cut). */
+  const liveBusMarkers = new Map();
+  let liveAnimFrameId = null;
 
   /** Best-effort match from a live position's own route identifier to a GTFS route (for color + a friendlier name in the popup) — NOT guaranteed, since the live AVL vendor's route numbering doesn't always match the GTFS feed's route_id 1:1 (confirmed true for Hernando: Passio reports "Route 3"/"Route 10"/etc, while this county's GTFS feed names some of those same routes by color — "Blue"/"Green"/"Purple" — instead). Falls back to the live position's own routeName/routeId text with a neutral color rather than guessing wrong. */
   function matchLiveBusRoute(bus){
@@ -1366,8 +1522,19 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
       if (r) return r;
     }
     if (bus.agencyId === 'hernando' && bus.routeName){
-      const r = Object.values(BUS_DATA.routes).find(r => r.agencyId === 'hernando' && r.longName === bus.routeName);
-      if (r) return r;
+      const exact = Object.values(BUS_DATA.routes).find(r => r.agencyId === 'hernando' && r.longName === bus.routeName);
+      if (exact) return exact;
+      // Second-chance match (ported from TriBus's own matchRouteId logic):
+      // Passio's "Route 3"/"Route 10" labels don't line up with every
+      // GTFS longName (some are color-named instead), but when a number
+      // IS present in both, cross-checking it catches real matches the
+      // exact-string comparison above misses.
+      const num = (bus.routeName.match(/\d+/) || [])[0];
+      if (num){
+        const byNumber = Object.values(BUS_DATA.routes).find(r =>
+          r.agencyId === 'hernando' && (r.shortName === num || (r.longName.match(/\d+/) || [])[0] === num));
+        if (byNumber) return byNumber;
+      }
     }
     return null;
   }
@@ -1385,36 +1552,105 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
     </div>`;
   }
 
+  function makeLiveBusIcon(color, heading){
+    return L.divIcon({
+      className:'', iconSize:[14,14], iconAnchor:[7,7],
+      html:`<div class="bus-live-marker" style="--pc:${esc(color)}; transform:rotate(${heading}deg)"></div>`
+    });
+  }
+
+  /** Shared single rAF loop (not one per marker) — tweens every live bus's displayed position/heading toward its latest known target, called continuously while any markers exist. Position: plain linear lerp (fine at county scale). Heading: shortest-path angular lerp so a 350°→10° turn animates through 0°, not the long way around. */
+  function animateLiveBuses(){
+    const now = Date.now();
+    for (const entry of liveBusMarkers.values()){
+      const t = Math.max(0, Math.min(1, (now - entry.animStart) / LIVE_POLL_MS));
+      const lat = entry.fromLat + (entry.toLat - entry.fromLat) * t;
+      const lng = entry.fromLng + (entry.toLng - entry.fromLng) * t;
+      entry.marker.setLatLng([lat, lng]);
+      const rawDelta = ((entry.toHeading - entry.fromHeading + 540) % 360) - 180;
+      const heading = entry.fromHeading + rawDelta * t;
+      const el = entry.marker.getElement();
+      const wedge = el && el.querySelector('.bus-live-marker');
+      if (wedge) wedge.style.transform = `rotate(${heading}deg)`;
+    }
+    liveAnimFrameId = liveBusMarkers.size ? requestAnimationFrame(animateLiveBuses) : null;
+  }
+  function ensureLiveAnimLoop(){
+    if (liveAnimFrameId == null && liveBusMarkers.size) liveAnimFrameId = requestAnimationFrame(animateLiveBuses);
+  }
+
   async function fetchLiveBuses(activeAgencyIds){
     if (liveFetchInFlight) return; // don't stack overlapping polls if one's still in flight (e.g. a slow cold start)
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000); // generous — Render free tier can take a while to wake from idle
-    liveFetchInFlight = fetch(LIVE_BUSES_URL, { signal:controller.signal })
+    liveFetchInFlight = fetch(LIVE_BUSES_URL, { signal:controller.signal, cache:'no-store' })
       .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(({ buses, fetchedAt }) => {
-        busLiveLayer.clearLayers();
+        consecutiveLiveFailures = 0;
+        const seenKeys = new Set();
         let shown = 0;
         for (const bus of buses){
           if (!activeAgencyIds.has(bus.agencyId)) continue;
+          const key = `${bus.agencyId}:${bus.busId}`;
+          seenKeys.add(key);
           const route = matchLiveBusRoute(bus);
           const color = (route && route.color) || getCSS('--c-transportation');
           const heading = Number.isFinite(bus.course) ? bus.course : 0;
-          const icon = L.divIcon({
-            className:'', iconSize:[14,14], iconAnchor:[7,7],
-            html:`<div class="bus-live-marker" style="--pc:${esc(color)}; transform:rotate(${heading}deg)"></div>`
-          });
-          L.marker([bus.lat, bus.lon], { icon })
-            .bindPopup(buildLiveBusPopupHtml(bus, fetchedAt), { maxWidth:260 })
-            .addTo(busLiveLayer);
+          const popupHtml = buildLiveBusPopupHtml(bus, fetchedAt);
+          let entry = liveBusMarkers.get(key);
+          if (!entry){
+            const marker = L.marker([bus.lat, bus.lon], { icon: makeLiveBusIcon(color, heading), opacity:1 })
+              .bindPopup(popupHtml, { maxWidth:260 })
+              .addTo(busLiveLayer);
+            entry = { marker, fromLat:bus.lat, fromLng:bus.lon, toLat:bus.lat, toLng:bus.lon, fromHeading:heading, toHeading:heading, animStart:Date.now() };
+            liveBusMarkers.set(key, entry);
+          } else {
+            // Freeze the CURRENT interpolated position as the new animation's
+            // starting point (not the old target) — otherwise a bus that
+            // hasn't finished its previous tween yet would visibly snap
+            // backward to catch up before animating forward again.
+            const t = Math.max(0, Math.min(1, (Date.now() - entry.animStart) / LIVE_POLL_MS));
+            entry.fromLat = entry.fromLat + (entry.toLat - entry.fromLat) * t;
+            entry.fromLng = entry.fromLng + (entry.toLng - entry.fromLng) * t;
+            const rawDelta = ((entry.toHeading - entry.fromHeading + 540) % 360) - 180;
+            entry.fromHeading = entry.fromHeading + rawDelta * t;
+            entry.toLat = bus.lat; entry.toLng = bus.lon; entry.toHeading = heading;
+            entry.animStart = Date.now();
+            entry.marker.setIcon(makeLiveBusIcon(color, entry.fromHeading));
+            entry.marker.setOpacity(1);
+            entry.marker.setPopupContent(popupHtml);
+          }
           shown++;
         }
+        // A bus missing from this poll (went out of service, off-route,
+        // vendor dropped it) is gone, not stale — remove immediately
+        // rather than leaving a frozen ghost marker behind.
+        for (const [key, entry] of liveBusMarkers){
+          if (!seenKeys.has(key)){ busLiveLayer.removeLayer(entry.marker); liveBusMarkers.delete(key); }
+        }
+        ensureLiveAnimLoop();
         const statusEl = document.getElementById('busLiveStatus');
-        if (statusEl) statusEl.textContent = shown ? `🔴 ${shown} bus${shown === 1 ? '' : 'es'} live right now` : 'No live buses reporting right now (outside service hours?)';
-        if (statusEl) statusEl.className = 'live-status ok';
+        if (statusEl){
+          statusEl.textContent = shown ? `🔴 ${shown} bus${shown === 1 ? '' : 'es'} live right now` : 'No live buses reporting right now (outside service hours?)';
+          statusEl.className = 'live-status ok';
+        }
       })
       .catch(() => {
+        // The backend (or the rider's connection) failed THIS poll — the
+        // positions we're still showing are aging, not necessarily gone.
+        // Fade them progressively with each consecutive miss rather than
+        // leaving them looking exactly as fresh as they did on the last
+        // real success; the status line makes the same point in words.
+        consecutiveLiveFailures++;
+        const fadeOpacity = Math.max(0.25, 1 - consecutiveLiveFailures * 0.25);
+        for (const entry of liveBusMarkers.values()) entry.marker.setOpacity(fadeOpacity);
         const statusEl = document.getElementById('busLiveStatus');
-        if (statusEl){ statusEl.textContent = 'Live positions unavailable right now — routes/schedules above are unaffected.'; statusEl.className = 'live-status off'; }
+        if (statusEl){
+          statusEl.textContent = liveBusMarkers.size
+            ? `Live positions haven't updated in a bit — last known spots shown, fading.`
+            : `Live positions unavailable right now — routes/schedules above are unaffected.`;
+          statusEl.className = 'live-status off';
+        }
       })
       .finally(() => { clearTimeout(timeout); liveFetchInFlight = null; });
     return liveFetchInFlight;
@@ -1427,13 +1663,17 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
   }
   function stopLiveBusPolling(){
     if (livePollTimer){ clearInterval(livePollTimer); livePollTimer = null; }
+    if (liveAnimFrameId != null){ cancelAnimationFrame(liveAnimFrameId); liveAnimFrameId = null; }
     busLiveLayer.clearLayers();
+    liveBusMarkers.clear();
+    consecutiveLiveFailures = 0;
     const statusEl = document.getElementById('busLiveStatus');
     if (statusEl){ statusEl.textContent = ''; }
   }
 
   /** Shows only the agency(ies) relevant to the current county filter — both when "All Florida" or a bus-covered county is selected, none (with an explanatory note) when a non-covered county is selected. Re-run from selectCounty() on every change, and immediately on toggle-on. */
   function refreshBusLayer(){
+    if (selectedBusRouteId) setRouteHighlight(null); // a highlighted route from a now-hidden agency shouldn't linger dimming whatever's shown next
     const coveredCounties = Object.values(BUS_DATA.agencies).map(a => a.county);
     let activeAgencyIds;
     if (!selectedCounty){
@@ -1477,6 +1717,7 @@ if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes && BUS_DATA.stops){
       stopLiveBusPolling();
     }
     refreshBusLayer();
+    updateClearFiltersVisibility();
   });
 
   /* Stop polling a hidden tab — no point burning the free-tier backend's
@@ -1604,9 +1845,53 @@ function refresh(){
     el.onclick = () => revealMarker(m);
     list.appendChild(el);
   });
-  document.getElementById('empty').style.display = shown.length ? 'none' : 'block';
+  const emptyEl = document.getElementById('empty');
+  emptyEl.style.display = shown.length ? 'none' : 'block';
+  if (!shown.length){
+    emptyEl.innerHTML = buildEmptyStateHtml();
+    const clearLink = document.getElementById('emptyClearBtn');
+    if (clearLink) clearLink.onclick = clearAllFilters;
+  }
   document.getElementById('visCount').textContent = shown.length;
+  updateClearFiltersVisibility();
 }
+
+/** Builds a specific "here's why nothing matched" message instead of a generic dead end — names the actual active filter(s) so someone in a hurry (this map's whole audience) knows exactly what to relax, with a one-click way to do it. */
+function buildEmptyStateHtml(){
+  const reasons = [];
+  if (selectedCounty) reasons.push(`${esc(t('list.emptyReasonCounty'))} ${esc(selectedCounty)} County`);
+  if (enabledCats.size < Object.keys(CATEGORIES).length) reasons.push(esc(t('list.emptyReasonCats')));
+  if (searchTerm) reasons.push(`${esc(t('list.emptyReasonSearch'))} "${esc(searchTerm)}"`);
+  if (userLoc) reasons.push(esc(t('list.emptyReasonNear')));
+  if (!reasons.length) return esc(t('list.emptyDefault'));
+  return `${esc(t('list.emptyPrefix'))} ${reasons.join(', ')}. <button type="button" class="empty-clear-link" id="emptyClearBtn">${esc(t('clearFilters.btn'))}</button>`;
+}
+
+/** True whenever any filter/mode differs from the default "All Florida, every category, no search, no near-me, bus layer off" state — drives the "Clear all filters" pill's visibility. */
+function isAnyFilterActive(){
+  return !!selectedCounty || enabledCats.size < Object.keys(CATEGORIES).length || searchTerm !== "" || !!userLoc || busLayerOn;
+}
+function updateClearFiltersVisibility(){
+  const btn = document.getElementById('clearFiltersBtn');
+  if (btn) btn.hidden = !isAnyFilterActive();
+}
+function clearAllFilters(){
+  if (selectedCounty) selectCounty(null, { fly:true });
+  if (enabledCats.size < Object.keys(CATEGORIES).length){
+    Object.keys(CATEGORIES).forEach(k => enabledCats.add(k));
+    rebuildCategoryChips();
+  }
+  if (searchTerm !== ""){
+    searchTerm = "";
+    document.getElementById('search').value = "";
+    updateSearchMatches();
+  }
+  if (userLoc) nearBtn.click(); // reuses the button's own existing off-path rather than duplicating it
+  if (busLayerOn) busToggleEl.click(); // same — reuses the toggle's own existing off-path
+  refresh();
+  syncUrlState();
+}
+document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
 
 /* ============ COUNTY SELECTOR (searchable combobox) ============
    Replaces a plain 68-option <select> — with that many entries a native
@@ -2460,6 +2745,58 @@ activateNearMe = function(pos, opts){
   _activateNearMeForInstallHint(pos, opts);
   maybeShowInstallHint();
 };
+
+/* ============ MAP LEGEND CONTROL ============
+   15 resource categories plus (once bus-data.js loads) 3 more distinct
+   marker types sharing the same map with zero persistent on-map key —
+   a collapsed-by-default Leaflet control, same corner as the zoom
+   control, keeps that information one click away without permanently
+   eating screen space. Content is built once at page load from the same
+   CATEGORIES object the category chips use, so it can never drift out
+   of sync with what's actually filterable. */
+let legendPanelEl = null, legendBtnEl = null;
+/** Rebuilds the legend's translated text — called once at creation and again from setLang(), same "rebuild rather than thread live-language-awareness through" approach already used for category chips/popups/quick-ref. */
+function rebuildLegendContent(){
+  if (!legendPanelEl) return;
+  const catRows = Object.entries(CATEGORIES).map(([key, c]) =>
+    `<div class="legend-row"><span class="swatch" style="--sc:${esc(c.color)}"></span>${esc(catLabel(key))}</div>`
+  ).join('');
+  let busRows = '';
+  if (typeof BUS_DATA !== 'undefined' && BUS_DATA.routes){
+    busRows = `
+      <div class="legend-title">${esc(t('legend.transit'))}</div>
+      <div class="legend-row"><span class="swatch line" style="--sc:${getCSS('--c-transportation')}"></span>${esc(t('legend.busRoute'))}</div>
+      <div class="legend-row"><span class="swatch square" style="--sc:${getCSS('--c-transportation')}"></span>${esc(t('legend.busStop'))}</div>
+      <div class="legend-row"><span class="swatch wedge" style="--sc:${getCSS('--c-transportation')}"></span>${esc(t('legend.busLive'))}</div>`;
+  }
+  legendPanelEl.innerHTML = `<div class="legend-title">${esc(t('legend.categories'))}</div>${catRows}${busRows}`;
+  legendPanelEl.setAttribute('aria-label', t('legend.toggle'));
+  legendBtnEl.setAttribute('aria-label', t('legend.toggle'));
+}
+const LegendControl = L.Control.extend({
+  options: { position: 'topright' },
+  onAdd: function(){
+    const container = L.DomUtil.create('div', 'legend-control');
+    legendBtnEl = L.DomUtil.create('button', 'legend-btn', container);
+    legendBtnEl.type = 'button';
+    legendBtnEl.setAttribute('aria-expanded', 'false');
+    legendBtnEl.textContent = '🗺';
+    legendPanelEl = L.DomUtil.create('div', 'legend-panel', container);
+    legendPanelEl.hidden = true;
+    legendPanelEl.setAttribute('role', 'region');
+    rebuildLegendContent();
+
+    legendBtnEl.addEventListener('click', () => {
+      const willOpen = legendPanelEl.hidden;
+      legendPanelEl.hidden = !willOpen;
+      legendBtnEl.setAttribute('aria-expanded', String(willOpen));
+    });
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    return container;
+  }
+});
+map.addControl(new LegendControl());
 </script>
 </body>
 </html>
