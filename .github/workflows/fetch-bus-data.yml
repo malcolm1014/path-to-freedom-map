@@ -1,0 +1,36 @@
+name: Refresh bus data
+
+# Keeps bus-data.js (see scripts/fetch-bus-data.js) in sync with the
+# agencies' own published GTFS feeds. Unlike data.js — whose per-entry
+# `verified` dates are the freshness signal, and county pages/sitemap.xml
+# — which regenerate on every data.js push, bus-data.js has no other
+# freshness mechanism at all: it's fetched from live upstream feeds that
+# change on their own schedule (a new route, a shifted timetable) with no
+# push to this repo to react to. A weekly cron is the only way this stays
+# current. fetch-bus-data.js itself refuses to overwrite the file with a
+# suspiciously smaller pull (a broken/empty feed), so a bad upstream fetch
+# fails this job loudly instead of silently shipping broken schedules.
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays 9am UTC (4-5am US Eastern, off-peak)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/fetch-bus-data.js
+      - name: Commit and push if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bus-data.js
+          git diff --staged --quiet || git commit -m "Auto-refresh bus route/schedule data [skip ci]"
+          git push
