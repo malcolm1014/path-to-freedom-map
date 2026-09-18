@@ -304,6 +304,67 @@
   #search::placeholder{ color:var(--muted); }
   #search:focus{ outline:none; border-color:var(--accent); }
 
+  /* County combobox — searchable/grouped replacement for a plain <select>
+     now that there are 67+1 options, too many to scan by scrolling alone.
+     Field doubles as display (shows current selection when closed) and
+     live filter (clears + becomes a search box once opened). */
+  .ccombo{ position:relative; }
+  .ccombo-field{ position:relative; display:flex; align-items:center; }
+  #countySearch{
+    width:100%; padding:9px 54px 9px 12px; border-radius:10px;
+    background:var(--glass-2); border:1px solid var(--line); color:var(--text);
+    font-family:var(--sans); font-size:.82rem; cursor:pointer;
+    text-overflow:ellipsis;
+  }
+  #countySearch::placeholder{ color:var(--muted); }
+  #countySearch:focus{ outline:none; border-color:var(--accent); cursor:text; }
+  .ccombo-chev{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:.8rem; pointer-events:none; transition:transform .15s ease, color .15s ease;
+  }
+  .ccombo.open .ccombo-chev{ transform:translateY(-50%) rotate(180deg); color:var(--accent); }
+  .ccombo-clear{
+    position:absolute; right:30px; top:50%; transform:translateY(-50%);
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; border:none; background:none; color:var(--muted);
+    font-size:1.05rem; line-height:1; cursor:pointer; padding:0;
+  }
+  .ccombo-clear:hover{ color:var(--text); background:rgba(255,255,255,.08); }
+  .ccombo-clear:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .ccombo-list{
+    position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    max-height:300px; overflow-y:auto; overscroll-behavior:contain;
+    background:var(--glass); backdrop-filter:blur(18px) saturate(1.25);
+    -webkit-backdrop-filter:blur(18px) saturate(1.25);
+    border:1px solid var(--line); border-radius:12px;
+    box-shadow:0 16px 40px rgba(0,0,0,.5);
+    padding:6px; margin:0; list-style:none;
+    scrollbar-width:thin; scrollbar-color:rgba(166,190,166,.35) transparent;
+  }
+  .ccombo-list::-webkit-scrollbar{ width:8px; }
+  .ccombo-list::-webkit-scrollbar-track{ background:transparent; }
+  .ccombo-list::-webkit-scrollbar-thumb{ background:rgba(166,190,166,.30); border-radius:99px; }
+  .ccombo-divider{
+    font-family:var(--mono); font-size:.58rem; font-weight:500; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); padding:9px 10px 5px;
+  }
+  .ccombo-divider:first-child{ padding-top:4px; }
+  .ccombo-opt{
+    display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px;
+    font-family:var(--sans); font-size:.8rem; color:var(--text); cursor:pointer;
+  }
+  .ccombo-opt .cco-dot{ width:7px; height:7px; border-radius:50%; flex:none; background:var(--accent); }
+  .ccombo-opt.no-data{ color:var(--muted); }
+  .ccombo-opt.no-data .cco-dot{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted); }
+  .ccombo-opt .cco-name{ flex:1; }
+  .ccombo-opt .cco-hint{ font-family:var(--mono); font-size:.6rem; color:var(--muted); }
+  .ccombo-opt.active{ background:rgba(255,255,255,.07); }
+  .ccombo-opt[aria-selected="true"]{ background:rgba(79,216,122,.14); }
+  .ccombo-opt[aria-selected="true"] .cco-name{ color:var(--accent); font-weight:600; }
+  .ccombo-opt[aria-selected="true"] .cco-dot{ box-shadow:0 0 0 3px rgba(79,216,122,.22); }
+  .ccombo-empty{ padding:16px 10px; color:var(--muted); font-size:.78rem; text-align:center; }
+
   /* Scrollable panel body — one scrollbar for every section under the header */
   #panelbody{
     flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain;
@@ -554,6 +615,9 @@
     .chip{ padding:9px 14px 9px 11px; font-size:.78rem; flex:none; white-space:nowrap; }
     .chip .dot{ width:10px; height:10px; }
     #search{ padding:12px 12px 12px 34px; font-size:.88rem; }
+    #countySearch{ padding:12px 54px 12px 12px; font-size:.88rem; }
+    .ccombo-opt{ padding:11px 12px; font-size:.86rem; }
+    .ccombo-list{ max-height:min(340px, 55vh); }
     #nearme{ padding:9px 14px; font-size:.72rem; }
     .pin{ width:17px; height:17px; border-width:2.5px; }
     /* Popups are opened with a fixed 340px maxWidth (see revealMarker/
@@ -563,6 +627,7 @@
   }
   @media (prefers-reduced-motion: reduce){
     .pin, .chip, .item{ transition:none; }
+    .ccombo-chev{ transition:none; }
     .you{ animation:none; }
   }
 
@@ -632,8 +697,16 @@
 
   <div class="pad hairline">
     <div class="label" data-i18n="label.county">County</div>
-    <div class="searchwrap" style="margin-bottom:0;">
-      <select id="countySel" data-i18n-aria="label.county" aria-label="County" style="width:100%; padding:9px 12px; border-radius:10px; background:var(--glass-2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-size:.82rem;"></select>
+    <div class="ccombo" id="countyCombo">
+      <div class="ccombo-field">
+        <input id="countySearch" type="text" role="combobox" aria-expanded="false"
+               aria-controls="countyListbox" aria-autocomplete="list" aria-haspopup="listbox"
+               data-i18n-aria="label.county" aria-label="County"
+               autocomplete="off" spellcheck="false">
+        <button type="button" id="countyClearBtn" class="ccombo-clear" data-i18n-aria="county.showAll" aria-label="Show all Florida" hidden>&times;</button>
+        <span class="ccombo-chev" aria-hidden="true">&#9662;</span>
+      </div>
+      <ul id="countyListbox" class="ccombo-list" role="listbox" data-i18n-aria="label.county" aria-label="County" hidden></ul>
     </div>
   </div>
 
@@ -1169,21 +1242,156 @@ function refresh(){
   document.getElementById('visCount').textContent = shown.length;
 }
 
-/* ============ COUNTY SELECTOR ============ */
+/* ============ COUNTY SELECTOR (searchable combobox) ============
+   Replaces a plain 68-option <select> — with that many entries a native
+   dropdown is slow to scan and impossible to search by typing on most
+   platforms. This is a standard ARIA combobox: #countySearch both
+   displays the current selection (when closed) and doubles as a live
+   text filter (once opened), and the listbox groups results into
+   "Counties with data" / "Not yet added" so it's obvious at a glance
+   which entries are actually worth picking right now, instead of a flat
+   alphabetical wall with "(no data yet)" suffixes easy to miss while
+   scrolling. Arrow keys / Enter / Escape / click / touch all work; click
+   or Tab away closes it, matching normal combobox behavior everywhere else. */
 const ALL_FL_COUNTIES = FL_COUNTY_GEO.features.map(f => f.properties.name).sort();
-const countySelEl = document.getElementById('countySel');
-(() => {
-  const optAll = document.createElement('option');
-  optAll.value = ""; optAll.textContent = `All Florida (${countiesWithData.size} of 67 counties have data so far)`;
-  countySelEl.appendChild(optAll);
-  for (const name of ALL_FL_COUNTIES){
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = countiesWithData.has(name) ? name : `${name} (no data yet)`;
-    countySelEl.appendChild(opt);
+const countyComboEl = document.getElementById('countyCombo');
+const countyInputEl = document.getElementById('countySearch');
+const countyListEl = document.getElementById('countyListbox');
+const countyClearEl = document.getElementById('countyClearBtn');
+
+function allFloridaLabel(){ return `All Florida (${countiesWithData.size} of 67 counties have data so far)`; }
+function countyDisplayLabel(){ return selectedCounty || allFloridaLabel(); }
+
+let ccOptions = [];      // flat list of {value, el} currently rendered, dividers excluded
+let ccActiveIndex = -1;
+
+function renderCountyList(filterText){
+  const q = (filterText || '').trim().toLowerCase();
+  countyListEl.innerHTML = '';
+  ccOptions = [];
+
+  const addDivider = (text) => {
+    const li = document.createElement('li');
+    li.className = 'ccombo-divider'; li.setAttribute('role', 'presentation');
+    li.textContent = text;
+    countyListEl.appendChild(li);
+  };
+  const addOption = (value, hasData) => {
+    const li = document.createElement('li');
+    li.className = 'ccombo-opt' + (hasData === false ? ' no-data' : '');
+    li.id = 'cco-' + (value ? value.replace(/[^a-z0-9]/gi, '') : 'all');
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', String((selectedCounty || '') === value));
+    li.innerHTML = `<span class="cco-dot"></span><span class="cco-name">${esc(value || allFloridaLabel())}</span>` +
+      (hasData === false ? `<span class="cco-hint">no data yet</span>` : '');
+    li.addEventListener('mousedown', (e) => { e.preventDefault(); pickCounty(value); });
+    li.addEventListener('mouseenter', () => setActiveIndex(ccOptions.findIndex(o => o.value === value)));
+    countyListEl.appendChild(li);
+    ccOptions.push({ value, el: li });
+  };
+
+  // "All Florida" is pinned at the top regardless of filter text — it's
+  // the reset path and should never be searched away.
+  addOption('', undefined);
+
+  const withData = ALL_FL_COUNTIES.filter(n => countiesWithData.has(n) && n.toLowerCase().includes(q));
+  const withoutData = ALL_FL_COUNTIES.filter(n => !countiesWithData.has(n) && n.toLowerCase().includes(q));
+
+  if (withData.length){
+    addDivider(`Counties with data (${withData.length})`);
+    withData.forEach(n => addOption(n, true));
   }
-})();
-countySelEl.addEventListener('change', () => selectCounty(countySelEl.value || null, { fly:true }));
+  if (withoutData.length){
+    addDivider(`Not yet added (${withoutData.length})`);
+    withoutData.forEach(n => addOption(n, false));
+  }
+  if (!withData.length && !withoutData.length && q){
+    const empty = document.createElement('li');
+    empty.className = 'ccombo-empty'; empty.setAttribute('role', 'presentation');
+    empty.textContent = `No county matches "${filterText}"`;
+    countyListEl.appendChild(empty);
+  }
+
+  ccActiveIndex = Math.max(0, ccOptions.findIndex(o => o.value === (selectedCounty || '')));
+  updateActiveHighlight();
+}
+
+function updateActiveHighlight(){
+  ccOptions.forEach((o, i) => o.el.classList.toggle('active', i === ccActiveIndex));
+  const active = ccOptions[ccActiveIndex];
+  if (active){ countyInputEl.setAttribute('aria-activedescendant', active.el.id); active.el.scrollIntoView({ block:'nearest' }); }
+  else countyInputEl.removeAttribute('aria-activedescendant');
+}
+
+function setActiveIndex(i){
+  if (i < 0 || i >= ccOptions.length) return;
+  ccActiveIndex = i;
+  updateActiveHighlight();
+}
+
+function openCountyList(){
+  if (countyComboEl.classList.contains('open')) return;
+  countyComboEl.classList.add('open');
+  countyListEl.hidden = false;
+  countyInputEl.setAttribute('aria-expanded', 'true');
+  countyInputEl.value = '';
+  countyInputEl.placeholder = 'Search counties…';
+  renderCountyList('');
+}
+
+function closeCountyList(){
+  countyComboEl.classList.remove('open');
+  countyListEl.hidden = true;
+  countyInputEl.setAttribute('aria-expanded', 'false');
+  countyInputEl.removeAttribute('aria-activedescendant');
+  countyInputEl.value = countyDisplayLabel();
+  countyInputEl.placeholder = '';
+}
+
+function pickCounty(value){
+  closeCountyList();
+  countyInputEl.blur();
+  selectCounty(value || null, { fly:true });
+}
+
+countyInputEl.addEventListener('focus', openCountyList);
+countyInputEl.addEventListener('click', openCountyList);
+countyInputEl.addEventListener('input', () => renderCountyList(countyInputEl.value));
+countyInputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown'){
+    e.preventDefault();
+    if (!countyComboEl.classList.contains('open')) openCountyList();
+    else setActiveIndex(Math.min(ccActiveIndex + 1, ccOptions.length - 1));
+  } else if (e.key === 'ArrowUp'){
+    e.preventDefault();
+    setActiveIndex(Math.max(ccActiveIndex - 1, 0));
+  } else if (e.key === 'Enter'){
+    e.preventDefault();
+    const opt = ccOptions[ccActiveIndex];
+    if (opt) pickCounty(opt.value);
+  } else if (e.key === 'Escape'){
+    closeCountyList();
+    countyInputEl.blur();
+  } else if (e.key === 'Tab'){
+    closeCountyList();
+  }
+});
+countyInputEl.addEventListener('blur', () => {
+  // Deferred: a mousedown on an option/clear-button fires before blur,
+  // but we still want blur's "revert display text" behavior to run
+  // after that click's own handler (pickCounty already calls
+  // closeCountyList()/blur() itself, so this just double-confirms the
+  // closed state for every other blur cause — clicking outside, Tab, etc).
+  setTimeout(() => { if (document.activeElement !== countyInputEl) closeCountyList(); }, 120);
+});
+countyClearEl.addEventListener('mousedown', (e) => { e.preventDefault(); pickCounty(''); });
+document.addEventListener('click', (e) => { if (!countyComboEl.contains(e.target)) closeCountyList(); });
+
+function syncCountyCombo(){
+  if (!countyComboEl.classList.contains('open')) countyInputEl.value = countyDisplayLabel();
+  countyClearEl.hidden = !selectedCounty;
+}
+syncCountyCombo();
 
 /* Mobile back-button history depth (see the MOBILE BACK BUTTON block near
    the end of this script for the full picture): entering a county from
@@ -1214,7 +1422,7 @@ function selectCounty(name, opts){
       history.back();
     }
   }
-  countySelEl.value = selectedCounty || "";
+  syncCountyCombo();
   document.getElementById('countyCoverage').textContent =
     selectedCounty ? `· ${selectedCounty} County` : "";
 
