@@ -146,6 +146,38 @@
     body.mobile-list-active #credit-badge{ display:none; }
   }
 
+  /* PWA install hint — a dismissible toast, not a hard install push on
+     first paint. This is a resource-locator someone typically finds
+     once and uses briefly, not a daily-use app, so the softer pattern
+     the feature research recommended fits better than a modal prompt:
+     shown only after real engagement (see the JS trigger logic), easy
+     to dismiss, never shown again once dismissed or installed. Visible
+     at all widths (desktop Chrome/Edge support install too), with a
+     mobile-specific bottom offset to clear the tab bar. */
+  #installHint{ display:none; }
+  #installHint.visible{
+    display:flex; flex-direction:column; gap:10px;
+    position:fixed; left:12px; right:12px; max-width:360px; margin:0 auto; z-index:1240;
+    bottom:16px;
+    background:var(--glass); backdrop-filter:blur(18px) saturate(1.25);
+    -webkit-backdrop-filter:blur(18px) saturate(1.25);
+    border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 16px 44px rgba(0,0,0,.5);
+    padding:14px 16px;
+  }
+  #installHint .ih-text{ font-size:.82rem; line-height:1.45; color:var(--text); }
+  #installHint .ih-actions{ display:flex; gap:8px; }
+  #installHint button{
+    font-family:var(--sans); font-size:.78rem; font-weight:500; cursor:pointer;
+    border-radius:10px; padding:10px 14px; border:1px solid var(--line);
+  }
+  #installHint .ih-primary{ background:var(--accent); color:#07110a; border-color:var(--accent); flex:1; font-weight:700; }
+  #installHint .ih-dismiss{ background:var(--glass-2); color:var(--muted); }
+  @media (max-width:760px){
+    #installHint.visible{ bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px); }
+    body.mobile-list-active #installHint.visible{ display:none; } /* same reasoning as credit-badge: the List tab's own content occupies this space */
+  }
+
   /* ============ FLOATING PANEL ============ */
   #panel{
     position:fixed; top:16px; left:16px; bottom:16px; width:392px; z-index:1100;
@@ -661,6 +693,17 @@
   </div>
 </div>
 
+<!-- PWA install hint — deliberately NOT a hard install push on first
+     paint (see the JS near sw.js registration for the trigger logic and
+     iOS-vs-Chromium split). -->
+<div id="installHint" role="region" aria-label="Save this site for offline use">
+  <div class="ih-text" data-i18n="install.text">This works offline once loaded — save it for next time?</div>
+  <div class="ih-actions">
+    <button id="ihInstall" class="ih-primary" data-i18n="install.add">Add to Home Screen</button>
+    <button id="ihDismiss" class="ih-dismiss" data-i18n="install.dismiss">Not now</button>
+  </div>
+</div>
+
 <!-- Resource rows live in data.js. The ?v= query string is a manually-bumped
      cache-buster: bump it any time data.js changes. Needed because a plain
      <script src> load of this file can be served straight from the
@@ -736,6 +779,10 @@ const I18N = {
     'popup.website': "Website ↗", 'popup.verified': "independently verified",
     'popup.report': "See something wrong here? Report it ↗",
     'lb.locating': "◎ Locating…", 'lb.blocked': "◎ Location blocked — try Near Me in the list",
+    'install.text': "This works offline once loaded — save it for next time?",
+    'install.add': "Add to Home Screen", 'install.dismiss': "Not now",
+    'install.iosText': "This works offline once loaded. To save it: tap the Share icon, then \"Add to Home Screen.\"",
+    'install.ok': "Got it",
   },
   es: {
     'qe.leaveFloat': "Salir ×2", 'qe.leaveBtn': "Salir de este sitio ×2",
@@ -765,6 +812,10 @@ const I18N = {
     'popup.website': "Sitio web ↗", 'popup.verified': "verificado de forma independiente",
     'popup.report': "¿Ves algo incorrecto aquí? Repórtalo ↗",
     'lb.locating': "◎ Localizando…", 'lb.blocked': "◎ Ubicación bloqueada — prueba \"Cerca de mí\" en la lista",
+    'install.text': "Esto funciona sin conexión una vez cargado — ¿lo guardas para la próxima vez?",
+    'install.add': "Agregar a pantalla de inicio", 'install.dismiss': "Ahora no",
+    'install.iosText': "Esto funciona sin conexión una vez cargado. Para guardarlo: toca el ícono de Compartir y luego \"Agregar a pantalla de inicio.\"",
+    'install.ok': "Entendido",
   }
 };
 const CATEGORY_LABELS_ES = {
@@ -1283,10 +1334,26 @@ tabMapBtn.addEventListener('click', () => { setMobileView('map'); fitMapIfResult
 tabListBtn.addEventListener('click', () => setMobileView('list'));
 
 /* Reveal a marker even if it's clustered (or filtered out) */
+/* revealToken guards against a real race: clusters.zoomToShowLayer()'s
+   callback fires asynchronously once its cluster-spiderfy/zoom animation
+   completes — if a SECOND revealMarker() call comes in before the first
+   one's callback has fired (a fast double-click/tap on two different
+   pins/list rows is enough), Leaflet can end up trying to open a popup
+   whose _map reference already got cleared by the second call's own
+   zoom, throwing "Cannot read properties of null (reading
+   'layerPointToContainerPoint')" — confirmed by reproducing it directly.
+   Each call captures the token at call time; the callback only acts if
+   no newer reveal has started since, so a superseded animation's
+   callback becomes a safe no-op instead of operating on stale state. */
+let revealToken = 0;
 function revealMarker(m){
   if (isMobile()) setMobileView('map'); // jump back to the map so the pin/popup is actually visible
+  const myRevealToken = ++revealToken;
   if (clusters.hasLayer(m)){
-    clusters.zoomToShowLayer(m, () => m.openPopup());
+    clusters.zoomToShowLayer(m, () => {
+      if (myRevealToken !== revealToken) return;
+      m.openPopup();
+    });
   } else {
     map.flyTo([m._data.lat, m._data.lng], 14, {duration:.8});
     L.popup({ maxWidth:340 }).setLatLng([m._data.lat, m._data.lng])
@@ -1745,6 +1812,68 @@ if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(() => { /* not fatal — map still works without it */ });
   });
 }
+
+/* ============ PWA INSTALL HINT (soft, dismissible — not a hard push) ============
+   The feature research this session was explicit that a resource-locator
+   someone typically finds once and uses briefly (a library computer, a
+   one-off need) isn't a daily-use app — an aggressive install prompt
+   fits that pattern, not this one. Shown only after real engagement (a
+   2nd distinct resource viewed, or "Near me" used), easy to dismiss,
+   never shown again once dismissed or already installed. Chromium
+   fires `beforeinstallprompt` and lets us trigger the native prompt
+   ourselves; iOS Safari never fires it at all, so that path gets a
+   plain instructional coachmark instead of a broken "Add" button. */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+let installHintShown = false;
+let installHintDismissed = false;
+try { installHintDismissed = localStorage.getItem('ptf_installHintDismissed') === '1'; } catch(e) { /* private mode, etc */ }
+const installHintEl = document.getElementById('installHint');
+function maybeShowInstallHint(){
+  if (installHintShown || installHintDismissed || isStandalone) return;
+  if (!isIOSDevice && !deferredInstallPrompt) return; // Chromium hasn't offered a real prompt yet — nothing to show
+  installHintShown = true;
+  if (isIOSDevice){
+    document.querySelector('#installHint .ih-text').textContent = t('install.iosText');
+    document.getElementById('ihInstall').textContent = t('install.ok'); // no real install action possible — just acknowledges the instructions
+  }
+  installHintEl.classList.add('visible');
+}
+function dismissInstallHint(){
+  installHintEl.classList.remove('visible');
+  try { localStorage.setItem('ptf_installHintDismissed', '1'); } catch(e) { /* private mode, etc */ }
+}
+document.getElementById('ihDismiss').addEventListener('click', dismissInstallHint);
+document.getElementById('ihInstall').addEventListener('click', async () => {
+  if (deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  }
+  dismissInstallHint();
+});
+/* Engagement trigger: a 2nd distinct resource viewed, or "Near me" used
+   once — both signal someone's actually using the map, not just
+   glancing at it. Wrapping the existing functions rather than adding
+   calls inside each one keeps this whole feature easy to lift out
+   later without touching their logic. */
+const ptfViewedResources = new Set();
+const _revealMarkerForInstallHint = revealMarker;
+revealMarker = function(m){
+  _revealMarkerForInstallHint(m);
+  ptfViewedResources.add(m);
+  if (ptfViewedResources.size >= 2) maybeShowInstallHint();
+};
+const _activateNearMeForInstallHint = activateNearMe;
+activateNearMe = function(pos, opts){
+  _activateNearMeForInstallHint(pos, opts);
+  maybeShowInstallHint();
+};
 </script>
 </body>
 </html>
