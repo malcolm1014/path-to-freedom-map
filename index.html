@@ -1118,7 +1118,18 @@ function syncUrlState(){
 function readUrlState(){
   const p = initialUrlParams;
   const county = p.get('county');
-  if (county && ALL_FL_COUNTIES.includes(county)) selectCounty(county, { fly:true });
+  /* selectCounty() does a map.flyToBounds() animation — real-world it's
+     solid, but it's still the one call in this function with any real
+     chance of throwing (a bad viewport state, a future edge case in the
+     county geometry, etc). Isolated in its own try/catch so a failure
+     there can't silently cascade into skipping the cats/q processing
+     below — found this exact failure mode directly: a sandbox-only 0×0
+     viewport glitch threw here during testing and the two blocks below
+     never ran, with no visible sign anything had gone wrong. */
+  if (county && ALL_FL_COUNTIES.includes(county)){
+    try { selectCounty(county, { fly:true }); }
+    catch(e){ console.error('readUrlState: selectCounty failed, continuing with remaining URL params', e); }
+  }
   const catsParam = p.get('cats');
   if (catsParam){
     for (const tok of catsParam.split(',')){
