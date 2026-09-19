@@ -954,6 +954,10 @@
      stays hidden — see the BUS_DATA guard further down, same non-fatal
      pattern as the Fuse.js CDN check. -->
 <script src="bus-data.js?v=20260918a"></script>
+<!-- ZIP code -> county lookup for the county search box (scripts/fetch-fl-zip-counties.js,
+     US Census Bureau ZCTA-county crosswalk). Optional — if this fails to load,
+     the county search box just falls back to name-only matching. -->
+<script src="FL_ZIP_COUNTY.js?v=20260919a"></script>
 <script>
 /* data.js is a separate, plain <script src> tag loaded just above this one
    (880KB — real weight on a mobile connection). If that request drops or
@@ -1916,6 +1920,21 @@ function countyDisplayLabel(){ return selectedCounty || allFloridaLabel(); }
 let ccOptions = [];      // flat list of {value, el} currently rendered, dividers excluded
 let ccActiveIndex = -1;
 
+/* Matches a typed ZIP (full 5-digit or a 3+ digit prefix — "346" while
+   still typing "34601") to a county via FL_ZIP_COUNTY (US Census ZCTA
+   crosswalk, scripts/fetch-fl-zip-counties.js). Returns the first
+   matching ZIP for that county (for the on-row hint) or null — a real,
+   common case for this app's audience: someone knows their ZIP but not
+   which county they're in. Gracefully degrades to name-only search if
+   FL_ZIP_COUNTY failed to load, same non-fatal pattern as bus-data.js. */
+function matchingZipFor(county, q){
+  if (typeof FL_ZIP_COUNTY === 'undefined' || !/^\d{3,5}$/.test(q)) return null;
+  for (const zip of Object.keys(FL_ZIP_COUNTY)){
+    if (FL_ZIP_COUNTY[zip] === county && zip.startsWith(q)) return zip;
+  }
+  return null;
+}
+
 function renderCountyList(filterText){
   const q = (filterText || '').trim().toLowerCase();
   countyListEl.innerHTML = '';
@@ -1933,8 +1952,9 @@ function renderCountyList(filterText){
     li.id = 'cco-' + (value ? value.replace(/[^a-z0-9]/gi, '') : 'all');
     li.setAttribute('role', 'option');
     li.setAttribute('aria-selected', String((selectedCounty || '') === value));
+    const zipHint = value ? matchingZipFor(value, q) : null;
     li.innerHTML = `<span class="cco-dot"></span><span class="cco-name">${esc(value || allFloridaLabel())}</span>` +
-      (hasData === false ? `<span class="cco-hint">no data yet</span>` : '');
+      (zipHint ? `<span class="cco-hint">ZIP ${esc(zipHint)}</span>` : (hasData === false ? `<span class="cco-hint">no data yet</span>` : ''));
     li.addEventListener('mousedown', (e) => { e.preventDefault(); pickCounty(value); });
     li.addEventListener('mouseenter', () => setActiveIndex(ccOptions.findIndex(o => o.value === value)));
     countyListEl.appendChild(li);
@@ -1945,8 +1965,9 @@ function renderCountyList(filterText){
   // the reset path and should never be searched away.
   addOption('', undefined);
 
-  const withData = ALL_FL_COUNTIES.filter(n => countiesWithData.has(n) && n.toLowerCase().includes(q));
-  const withoutData = ALL_FL_COUNTIES.filter(n => !countiesWithData.has(n) && n.toLowerCase().includes(q));
+  const matches = n => n.toLowerCase().includes(q) || !!matchingZipFor(n, q);
+  const withData = ALL_FL_COUNTIES.filter(n => countiesWithData.has(n) && matches(n));
+  const withoutData = ALL_FL_COUNTIES.filter(n => !countiesWithData.has(n) && matches(n));
 
   if (withData.length){
     addDivider(`Counties with data (${withData.length})`);
@@ -1959,7 +1980,7 @@ function renderCountyList(filterText){
   if (!withData.length && !withoutData.length && q){
     const empty = document.createElement('li');
     empty.className = 'ccombo-empty'; empty.setAttribute('role', 'presentation');
-    empty.textContent = `No county matches "${filterText}"`;
+    empty.textContent = `No county or ZIP code matches "${filterText}"`;
     countyListEl.appendChild(empty);
   }
 
@@ -1986,7 +2007,7 @@ function openCountyList(){
   countyListEl.hidden = false;
   countyInputEl.setAttribute('aria-expanded', 'true');
   countyInputEl.value = '';
-  countyInputEl.placeholder = 'Search counties…';
+  countyInputEl.placeholder = 'Search by county or ZIP code…';
   renderCountyList('');
 }
 
