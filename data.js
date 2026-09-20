@@ -27,6 +27,14 @@
           clothing thrift stores / free-clothing & household-goods
                     voucher programs
           medical  free/low-cost clinics
+          mentalhealth community mental-health/behavioral-health centers,
+                    crisis stabilization units, substance-abuse treatment
+                    accepting Medicaid/sliding-scale/uninsured patients.
+                    Distinct from `medical` (general clinics) and from a
+                    `mentalhealth` tag under `services` (a cross-cutting
+                    need flag any category can carry, e.g. a hub that also
+                    offers counseling) — this is for the org whose actual
+                    mission IS mental/behavioral health
           coalition coordinating/advocacy agencies (CoC lead, task forces)
           transportation bus/paratransit systems
           pet      pet food pantries

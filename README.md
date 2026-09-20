@@ -1,28 +1,25 @@
-# Path to Freedom — Hernando County Resource Map
+# Path to Freedom — Florida Homelessness & Poverty Resource Map
 
-An interactive map of homelessness and poverty resources across Hernando
-County, FL — food pantries, shelters with real overnight beds, thrift/
-clothing voucher programs, pet food pantries, transportation, clinics and
-mental-health/veteran support, dedicated job/employment centers,
-government social-welfare offices (Section 8, Medicaid/SNAP/TANF
-applications, the school district's homeless-student liaison), free
-public workspace (computers, meeting rooms), shower access (every gym in
-the county, ranked by cost, plus free options like a church that opens
-its showers twice a month), legally designated public camping (state
-forest primitive zones and developed campgrounds — not a claim that any
-other public land is open to overnight stays), and the coordinating
-agencies (211, Mid Florida Homeless Coalition, People Helping People,
-Hernando Community Coalition, United Way) that tie them together. 99
-entries, researched August 2026 across six passes.
+**[malcolm1014.github.io/path-to-freedom-map](https://malcolm1014.github.io/path-to-freedom-map)**
 
-Built with plain HTML/CSS/JS and [Leaflet](https://leafletjs.com/). No
-build tools, no API keys, no backend — it runs anywhere that can serve
-three static files (`index.html`, `data.js`, `boundary.js`), including
-GitHub Pages.
+An interactive, statewide map of homelessness and poverty resources
+across all **67 Florida counties** — **1,654 entries** across 15
+categories: food pantries, shelters with real overnight beds, thrift/
+clothing voucher programs, pet food pantries, transportation (including
+live bus routes for two counties), clinics and mental-health/substance-
+abuse treatment, dedicated job/employment centers, government social-
+welfare offices (Section 8, Medicaid/SNAP/TANF applications, each
+district's homeless-student liaison), free public workspace (computers,
+meeting rooms), shower access, legally designated public camping, and
+the coalitions/hotlines that tie a region together.
 
-Sibling project to [Florida Cyber Resource
-Map](../florida-cyber-map) and [US Cyber Resource
-Map](../us-cyber-map) — same architecture, different mission.
+Started as a single-county build (Hernando, August 2026) and grew the
+same way [US Cyber Resource Map](../us-cyber-map) grew out of
+[Florida Cyber Resource Map](../florida-cyber-map) — same plain-HTML/
+Leaflet/no-build architecture, wider scope. Built with plain HTML/CSS/JS
+and [Leaflet](https://leafletjs.com/). No build tools, no API keys, no
+required backend — it runs anywhere that can serve static files,
+including GitHub Pages, and works installed offline as a PWA.
 
 ## Why this exists
 
@@ -36,38 +33,78 @@ dated, so it can be kept current instead of forgotten in a drawer.
 
 ## Features
 
-- **Precise county boundary** — the real Hernando County line (US Census
-  Bureau TIGERweb data, 2,068-vertex polygon, not hand-drawn) drawn as a
-  dashed outline on the map.
-- **Streets basemap** — full street-name and address-level labeling
-  (CARTO Voyager), so the map is actually navigable at building level.
-  No dark-mode map option — this is the only basemap.
-- **Category toggles** — show/hide each of 14 categories independently via
-  pill chips: shelter, food, multi-service hubs, clinics & mental health,
-  clothing, showers (gyms), job centers, government benefits offices,
-  free computers/workspace, transportation, pet food, legal public
-  camping, coordinating agencies,
-  hotlines.
-- **Search** — live filter by resource name or city.
+**Finding what you need**
+- **Searchable county picker** — a keyboard-navigable combobox (not a
+  plain `<select>`) covering all 67 counties, also matches a typed ZIP
+  code (`FL_ZIP_COUNTY.js`, sourced from the Census Bureau's ZCTA
+  relationship file).
+- **Category toggles** — show/hide each of 15 categories independently:
+  hub, food, shelter, clothing, medical, mentalhealth, coalition,
+  transportation, pet, hotline, workspace, hygiene, camping, jobs,
+  benefits.
+- **Search** — live filter by resource name or city, with an actionable
+  empty state naming the specific filter(s) narrowing the results.
+- **Near me** — the ◎ button uses browser geolocation to sort the
+  resource list by distance and drop a pulsing dot at your location.
+  Location never leaves the browser.
 - **Resource list** — every visible pin is also listed in the sidebar;
-  click a row to fly to it and open its popup.
-- **Marker clustering** — dense areas (Spring Hill, Brooksville) collapse
-  into count bubbles; clusters expand fully by zoom 13.
-- **Near me** — the ◎ button uses browser geolocation to sort the resource
-  list by distance (with mileage shown) and drop a pulsing dot at your
-  location. Click again to turn it off. Location never leaves the browser.
-- **Quick-reference call strip** — the five numbers worth memorizing (211,
-  Mid Florida Homeless Coalition, PHP, Dawn Center's 24hr DV hotline,
-  Catholic Charities), tap-to-call on mobile.
-- **Essential supplies checklist** (collapsible) — ID, SNAP/EBT card, bus
-  pass, a free Lifeline cell phone, backpack/tent/sleeping bag — each
-  with buttons that jump straight to the map pin (or open the right
-  outside link, like the Lifeline provider or Social Security Administration)
-  that actually gets you that item.
+  click a row to fly to it and open its popup. Marker clustering keeps
+  dense areas readable.
 - Popups show services offered, named sub-programs with their own
-  schedules (e.g. PHP's Tuesday clinic vs. its Sunday meal), address,
-  phone, hours, and an independent-verification date where one exists.
-- Responsive layout (map on top, sidebar below on phones).
+  schedules, address, phone, hours, and an independent-verification
+  date where one exists.
+
+**Getting there**
+- **Bus routes & live positions** (Hernando + Pasco counties, pilot) —
+  an opt-in layer showing real GTFS-derived route lines, stop clusters
+  with decoded weekday/Saturday/Sunday schedules, and live vehicle
+  positions polled from [TriBus](../../thebus-hernando)'s backend.
+  Fetched and transformed by `scripts/fetch-bus-data.js` with zero npm
+  dependencies, matching this project's existing zero-dependency
+  `scripts/` convention.
+- **Job search** — a static deep link into
+  [CareerOneStop](https://www.careeronestop.org)'s own public job
+  finder, pre-filled with the selected county's seat city. No backend,
+  no API token, nothing that can go down.
+- **Essential supplies checklist** (collapsible) — ID, SNAP/EBT card,
+  bus pass, a free Lifeline cell phone, backpack/tent/sleeping bag —
+  each with buttons that jump straight to the map pin (or open the
+  right outside link) that actually gets you that item.
+- **Quick-reference call strip** — the county's most important numbers
+  (211, DV hotline, etc.), tap-to-call on mobile.
+
+**Safety & privacy**
+- **Quick Exit** — an always-visible button (and double-press Escape)
+  that instantly leaves for a neutral page, standard practice on DV/
+  crisis-resource sites. Requires two presses so a single stray click
+  or Escape can't accidentally exit someone mid-use.
+- **Confidential shelter locations** — domestic-violence and some youth
+  shelters are deliberately pinned to a generalized city-center
+  coordinate rather than a real address, even when one is scraped from
+  elsewhere; see any DV-shelter entry's `notes` for the pattern.
+- **Clear My Data** — one tap wipes the only things this site persists
+  locally (a remembered county/location choice, no accounts or
+  tracking) — useful on a shared library computer that doesn't reset
+  between patrons.
+- Location, once granted, is only ever used client-side.
+
+**Accessibility & reach**
+- **English/Spanish toggle** — a UI-wide i18n layer (`data-i18n`
+  attributes throughout `index.html`), not just a translated landing
+  page.
+- **Mobile Map/List tabs** — a full-screen toggle (not a squashed bottom
+  sheet), with hardware/gesture back-button support that unwinds one
+  level at a time (pin popup → county → statewide → exit).
+- **PWA** — installable to a home screen, with an offline-capable
+  service worker caching the app shell and previously-viewed map tiles.
+- **Outdoor readability** — bigger touch targets and higher-contrast
+  colors on mobile, since this userbase is disproportionately outdoors.
+- **Per-county static pages** (`county/*.html`) — plain, pre-rendered,
+  crawlable HTML with real per-county URLs and JSON-LD structured data,
+  auto-regenerated by `scripts/generate-county-pages.js` (also runs in
+  CI whenever `data.js` changes) so a search engine has something to
+  rank for a hyperlocal query like "food pantry Brooksville FL."
+- **Print view** for a paper copy of the current filtered list.
 
 ## Editing the data
 
@@ -84,67 +121,57 @@ full schema reference; short version:
   notes:"Call ahead to confirm — schedules drift." },
 ```
 
-- `category`: `hub` (multi-service anchor, 3+ aid types under one roof) ·
-  `food` · `shelter` (only where there are real overnight beds) ·
-  `clothing` · `medical` (clinics, mental health, veteran/PTSD support) ·
-  `jobs` (dedicated employment centers — CareerSource, Vocational
-  Rehabilitation — where job placement is the actual mission, not a
-  side effect of having public computers) · `benefits` (government
-  social-welfare administration you walk into in person — Section 8
-  Housing Authority, the DCF/ACCESS Florida office, the school
-  district's homeless-student liaison — distinct from `hotline`, which
-  is phone-first with no physical Hernando address) · `workspace` (free computers/
-  meeting rooms — libraries; also where a real local commissary/
-  shared-use kitchen would go if one is ever confirmed — none found
-  in-county as of the August 2026 sweep, see "A note on accuracy") ·
-  `hygiene` (shower access — gyms ranked by cheapest membership found,
-  plus free options noted on hub entries like PHP) · `camping` (legally
-  designated public camping only — a state forest primitive zone or
-  developed campground, never "public land that's probably fine to camp
-  on"; WMA land where overnight camping is explicitly prohibited is
-  deliberately excluded, not implied as an option) · `coalition` ·
-  `transportation` · `pet` · `hotline` (phone-first, no single visitable
-  address)
+- `category`: `hub` (multi-service anchor, 3+ aid types under one roof)
+  · `food` · `shelter` (only where there are real overnight beds) ·
+  `clothing` (thrift/voucher programs) · `medical` (free/low-cost
+  clinics) · `mentalhealth` (community mental-health centers, crisis
+  stabilization units, substance-abuse treatment — an org whose actual
+  mission is behavioral health, distinct from the `medical` category
+  and from a `mentalhealth` tag under `services`) · `coalition`
+  (coordinating/advocacy agencies, CoC leads) · `transportation` ·
+  `pet` (pet food pantries) · `hotline` (phone-first, no single
+  visitable address) · `workspace` (free computers/meeting rooms —
+  libraries; distinct from `jobs`, whose actual mission is job
+  placement, e.g. CareerSource, Vocational Rehabilitation) · `hygiene`
+  (shower access — gyms by cheapest membership found, plus free
+  options) · `camping` (legally designated public camping only — never
+  "public land that's probably fine to camp on") · `jobs` · `benefits`
+  (government social-welfare offices you walk into in person — Section
+  8 Housing Authority, DCF/ACCESS Florida, a school district's
+  homeless-student liaison — distinct from `hotline`).
 - **Get `lat`/`lng` from a real geocoder** — the [US Census Bureau
-  geocoder](https://geocoding.geo.census.gov/geocoder/) or
-  [Nominatim](https://nominatim.openstreetmap.org/) — never eyeball a
-  coordinate for a resource someone might actually try to walk or ride a
-  bus to. Exception: domestic-violence/youth-crisis shelters and similar
-  confidential residential programs, where the location is deliberately
-  generalized to the city center — see the Dawn Center, Life Center of
-  Hernando, and New Beginnings Youth Shelter rows for the pattern
-  (city-center pin + explicit note, never the real/scraped address, even
-  if one turns up in a search).
-- `services` — cross-cutting need tags independent of category (same idea
-  as the cyber map's `topics`): `food`, `shelter`, `medical`, `clothing`,
-  `financial`, `transportation`, `petfood`, `snap`, `veterans`, `seniors`,
-  `children`, `casework`, `legal`, `dv`, `housing`, `energy`, `headstart`,
-  `mentalhealth`, `workspace`, `showers`.
-- `idRequired` — plain-language string, **required on every `shelter` and
-  `food` row** (optional elsewhere): what someone actually needs to show
-  up with. "None published — appears low-barrier" is a legitimate value
-  when no requirement could be found; several shelters here explicitly
-  do NOT require photo ID (the Dawn Center, deliberately, so a
-  domestic-violence survivor with no documents isn't turned away) —
-  don't assume a requirement that isn't sourced. For the ~26 individual
-  church pantries, this field carries a general county-wide documentation
-  pattern (photo ID, Social Security card, proof of Hernando County
-  residency) sourced from a directory DayStar Life Center itself compiled
-  — explicitly flagged in each entry as a general pattern, not a
-  confirmed per-church policy.
+  geocoder](https://geocoding.geo.census.gov/geocoder/) primary,
+  [Nominatim](https://nominatim.openstreetmap.org/) as fallback, and
+  cross-check the two against each other when they disagree or a match
+  looks geographically implausible (the Census geocoder has been caught
+  confidently substituting a same-sounding street miles away). Never
+  eyeball a coordinate for a resource someone might actually try to walk
+  or ride a bus to. Exception: domestic-violence/youth-crisis shelters
+  and similar confidential residential programs, where the location is
+  deliberately generalized to the city center — see any DV-shelter row
+  for the pattern (city-center pin + explicit note, never the real/
+  scraped address even if one turns up in a search).
+- `services` — cross-cutting need tags independent of category: `food`,
+  `shelter`, `medical`, `clothing`, `financial`, `transportation`,
+  `petfood`, `snap`, `veterans`, `seniors`, `children`, `casework`,
+  `legal`, `dv`, `housing`, `energy`, `headstart`, `mentalhealth`,
+  `workspace`, `showers`. Only tag what's actually confirmed offered.
+- `idRequired` — plain-language string, **required on every `shelter`
+  and `food` row** (optional elsewhere): what someone actually needs to
+  show up with. "None published — appears low-barrier" is a legitimate
+  value when no requirement could be found — never assume a photo ID is
+  required just because that's the norm elsewhere; several shelters
+  here explicitly do NOT require one (a deliberate low-barrier practice
+  at DV shelters especially).
 - `events` — named sub-programs at one address, each with its own
-  schedule (`[{ title, when }]`). Pull only from the org's own published
-  info, never invented.
-- `verified: "YYYY-MM-DD"` — set when you've independently re-confirmed a
-  row via the org's own site or a fresh search, not just carried it over
-  from an older list. Rows without it carry a call-ahead caveat in notes
-  instead — most of the church/pantry rows are sourced from a countywide
-  sheet People Helping People compiled and dated **October 2021**; treat
-  those phone numbers and times as a strong starting point, not gospel.
-- `county` / `st` — kept on every row, even though today they're all
-  `"Hernando"` / `"FL"`, so a future statewide or national pass (same
-  growth path the cyber maps took) can filter/group by it without a
-  schema change.
+  schedule (`[{ title, when, topics:[] }]`). Pull only from the org's own
+  published info, never invented.
+- `verified: "YYYY-MM-DD"` — set when a row has been independently
+  re-confirmed via the org's own site or a fresh search, not just
+  carried over from an older list. Rows without it carry a call-ahead
+  caveat in `notes` instead.
+- `county` / `st` — kept on every row; the county picker, per-county
+  static pages, and coverage tooling all key off this field.
 
 ### The supplies checklist (`SUPPLIES` in `data.js`)
 
@@ -152,28 +179,41 @@ A separate small array, not `RESOURCES` rows, since these are generic
 items rather than places: `{ item, note, links:[{ label, matchName }
 or { label, url }] }`. A `matchName` must exactly equal a `RESOURCES`
 row's `name` — the UI flies to that pin when clicked. Use `url` instead
-for anything with no single local pin (a phone provider's signup page,
-the Social Security Administration).
+for anything with no single local pin.
 
-### The county boundary (`boundary.js`)
+### County boundaries (`FL_COUNTY_GEO.js`)
 
-A single GeoJSON `Feature` (`HERNANDO_BOUNDARY`), fetched from the US
-Census Bureau's TIGERweb REST service (`State_County` MapServer, layer
-1) rather than hand-drawn or approximated — real county-line data, same
-standard this project holds `lat`/`lng` geocoding to. Drawn on the map
-as a dashed outline; not used for any filtering logic (unlike the cyber
-maps' `regions.js`, since this map only ever covers one county). If this
-map ever grows to cover a second county, each county gets its own
-`Feature` in a `FeatureCollection` here rather than a new file per
-county.
+All 67 Florida county boundary polygons, simplified from US Census
+Bureau 20m TIGER data via a hand-rolled Douglas-Peucker port
+(`scripts/make-fl-counties.js`) — real county-line data, same standard
+this project holds `lat`/`lng` geocoding to. `boundary.js` still holds
+the original, more-detailed Hernando-only polygon used before the
+statewide expansion.
+
+### Bus data (`bus-data.js`, `scripts/fetch-bus-data.js`)
+
+Hernando + Pasco counties' GTFS static feeds, fetched directly from each
+transit agency's own published feed URL and transformed with a
+hand-rolled ZIP reader + RFC4180 CSV parser (validated against the
+reference `adm-zip`/`csv-parse` packages before being trusted). Re-run
+`node scripts/fetch-bus-data.js` to refresh; expanding to another county
+means adding its GTFS feed URL to the `AGENCIES` config in that script —
+most Florida counties don't publish a usable public GTFS feed at all.
 
 ## Growing this map
 
-The schema is built to extend the same way `us-cyber-map` grew out of
-`florida-cyber-map`: add rows with a different `county`/`st`, and when a
-second county's worth of data exists, introduce a region-style
-drill-down UI (see `us-cyber-map/regions.js` and its `STATES.md` for the
-pattern) rather than changing how any existing row is shaped.
+Coverage grew Hernando-only (August 2026) → all 67 counties (statewide
+expansion) → two full deepening sweeps → a metro-by-metro deep-dive pass
+for the largest, thinnest counties (Duval/Jacksonville was first).
+`scripts/audit.js` (duplicate/near-duplicate detection, missing fields,
+out-of-bounds coordinates, stale verification dates, thin entries) is
+the standing data-quality gate — run it before and after any bulk
+data-adding session. `scripts/check-urls.js` sweeps for dead links.
+
+Natural next steps: further metro deep-dives (Miami-Dade, Pinellas, and
+other large counties flagged as "first pass only" in earlier sweeps),
+expanding the bus layer to a county with a usable public GTFS feed, and
+periodic re-verification sweeps as orgs move or close.
 
 ## Publishing on GitHub Pages
 
@@ -193,55 +233,25 @@ python3 -m http.server 8000
 ## A note on accuracy
 
 This is not an official or affiliated resource — it's a community
-reference compiled from public sources (org websites, findhelp.org, local
-news coverage, a congressional office's community resource guide, and
-PHP's own countywide pantry sheet) as of August 2026. Hours, food supply,
-and voucher availability at volunteer-run pantries change often. **Call
-ahead before a special trip.** If you find something stale or wrong,
-that's expected for a map this size — the data sweep date and any
-`verified` field on each entry tell you how fresh a given row is.
+reference compiled from public sources (org websites, findhelp.org,
+local news coverage, official county/agency resource guides, and
+targeted research passes) across multiple sessions since August 2026.
+Hours, food supply, and voucher availability at volunteer-run pantries
+change often. **Call ahead before a special trip.** The `verified`
+field and each county's most recent commit history tell you how fresh
+a given row is.
 
-**"Verified" means cross-checked against an independent written source,
-never an actual phone call** — this project has no calling capability.
-Two entries (Salvation Army's Spring Hill line, Esther's House's
-extension) could only be sourced once and carry an explicit
-`CONFIDENCE NOTE` in their `notes` field flagging that; everything else
-was corroborated across at least two independent sources.
+**"Verified" means cross-checked against an independent written
+source, never an actual phone call** — this project has no calling
+capability. A small number of entries could only be sourced once and
+carry an explicit `CONFIDENCE NOTE` in their `notes` field flagging
+that.
 
-**A real correction, not just a caveat:** researching ID/documentation
-requirements for the shelter rows turned up that Jericho Road Ministries'
-own current website describes a 5-to-25-month structured recovery
-program (Joshua's House for men, Esther's House for women) — not the
-walk-in, no-commitment emergency shelter model that third-party shelter
-directories (which this map originally relied on for "Mondon Hill" and
-"Mary's House") describe. Both framings are kept on the map rather than
-one silently overwriting the other: Mary's House's ~3-day emergency
-window and Mondon Hill are flagged as unconfirmed against the org's
-current materials, while Joshua's/Esther's House are described the way
-the org itself currently describes them. If you're triaging where to
-send someone tonight, call first — don't assume either framing without
-checking.
-
-**Searched for and not found (as of the August 2026 second-pass sweep):**
-a real shared-use/commissary kitchen physically located inside Hernando
-County. The nearest confirmed one (UF/IFAS's East Pasco Incubator
-Kitchen) is in Dade City, a different county — too far to map here as a
-local resource. If a Hernando-based one opens, it belongs under the
-`workspace` category alongside the libraries and CareerSource.
-
-**Fourth pass — gyms and a deeper church/charity sweep:** every gym
-found in the county is listed under `hygiene`, including two private
-country clubs (Southern Hills Plantation, Brooksville Country Club) —
-included for completeness since the ask was literally every gym, but
-clearly flagged as membership/application-based rather than a practical
-same-day option compared to the 24-hour chain gyms. The church research
-went beyond the original 2021 PHP sheet by searching each congregation's
-own site/socials rather than only aggregator directories, which is how
-5 new organizations turned up that PHP's list never had (a church that
-opens its showers twice a month, a transitional-housing nonprofit, two
-new food pantries, one new clothing closet) — that gap between what an
-old compiled list has and what a fresh per-org search turns up is worth
-remembering if this map gets another research pass later.
+**Geocoding honesty:** when an address won't resolve precisely on
+either geocoder, this map ships a documented gap note rather than an
+imprecise pin — someone will actually try to walk or drive to it. A
+candidate resource whose address can't be verified precisely and whose
+own website looks unreliable gets dropped rather than guessed.
 
 **If you are in immediate danger, call 911.**
 
@@ -250,4 +260,6 @@ remembering if this map gets another research pass later.
 Basemap tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright)
 contributors, Voyager style by [CARTO](https://carto.com/attributions).
 Geocoding via the US Census Bureau geocoder and OpenStreetMap Nominatim.
-County boundary via the US Census Bureau's TIGERweb service.
+County boundaries via the US Census Bureau's TIGER/TIGERweb data. Bus
+data via Hernando County Transit's and PascoGo's own published GTFS
+feeds; live positions via [TriBus](../../thebus-hernando).
